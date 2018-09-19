@@ -1,0 +1,11 @@
+query DeploymentsForRepo($owner: [String!], $repo: [String!], $environment: [String!]) {
+  Deployment(environment: $environment, _orderBy: "ts", _first: 2) {
+    commit(owner: $owner, repo: $repo) @required {
+      owner
+      repo
+      sha
+    }
+    environment
+    ts
+  }
+}

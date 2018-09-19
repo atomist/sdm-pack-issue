@@ -1,0 +1,13 @@
+query CommitsForRepoAndBranch($owner: String!, $repo: String!, $branch: String!, $page: Int!, $offset: Int!) {
+  Push(branch: $branch, orderBy: [timestamp_desc], first: $page, offset: $offset) {
+    repo(owner: $owner, name: $repo) @required {
+      name
+      owner
+    }
+    branch
+    commits(orderBy: [timestamp_desc]) {
+      sha
+      timestamp
+    }
+  }
+}

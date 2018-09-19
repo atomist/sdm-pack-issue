@@ -1,0 +1,10 @@
+subscription LabelIssuesOnDeployment {
+  Deployment {
+    commit {
+      owner
+      repo
+      sha
+    }
+    environment
+  }
+}
