@@ -23,7 +23,7 @@ import {
     configureSdm,
     createSoftwareDeliveryMachine,
 } from "@atomist/sdm-core";
-import { IssuesSupport } from "../lib/issues";
+import { IssueSupport } from "../lib/issue";
 
 export function machineMaker(config: SoftwareDeliveryMachineConfiguration): SoftwareDeliveryMachine {
 
@@ -33,7 +33,7 @@ export function machineMaker(config: SoftwareDeliveryMachineConfiguration): Soft
         },
     );
 
-    sdm.addExtensionPacks(IssuesSupport);
+    sdm.addExtensionPacks(IssueSupport);
 
     return sdm;
 }

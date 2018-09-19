@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export { IssuesSupport } from "./lib/issues";
+export { IssueSupport } from "./lib/issue";

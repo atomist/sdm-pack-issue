@@ -20,7 +20,7 @@ import {
 } from "@atomist/sdm";
 import { labelIssuesOnDeployment } from "./event/LabelIssueOnDeployment";
 
-export const IssuesSupport: ExtensionPack = {
+export const IssueSupport: ExtensionPack = {
     ...metadata(),
     configure: sdm => {
         sdm.addEvent(labelIssuesOnDeployment(sdm));
