@@ -1,7 +1,7 @@
-# @atomist-seeds/sdm-pack-issues
+# @atomist-seeds/sdm-pack-issue
 
-[![atomist sdm goals](http://badge.atomist.com/T29E48P34/atomist/sdm-pack-issues/9e75e44f-6ab5-4bcd-b441-c852270daf9a)](https://app.atomist.com/workspace/T29E48P34)
-[![npm version](https://img.shields.io/npm/v/@atomist/sdm-pack-issues.svg)](https://www.npmjs.com/package/@atomist/sdm-pack-issues)
+[![atomist sdm goals](http://badge.atomist.com/T29E48P34/atomist/sdm-pack-issue/07c8eef9-3448-452b-a61e-4b6c394c1b91)](https://app.atomist.com/workspace/T29E48P34)
+[![npm version](https://img.shields.io/npm/v/@atomist/sdm-pack-issue.svg)](https://www.npmjs.com/package/@atomist/sdm-pack-issue)
 
 Extension Pack for an [Atomist][atomist] SDM to automatically manage issues as they move through environments. 
 
@@ -12,7 +12,7 @@ Extension Pack for an [Atomist][atomist] SDM to automatically manage issues as t
 Install the dependency in your SDM project.
 
 ```
-$ npm install @atomist/sdm-pack-issues
+$ npm install @atomist/sdm-pack-issue
 ```
 
 Then use its exported method to add the functionality to your SDM in
@@ -26,14 +26,14 @@ import {
 import {
     createSoftwareDeliveryMachine,
 } from "@atomist/sdm-core";
-import { IssuesSupport } from "@atomist/sdm-pack-issues";
+import { IssueSupport } from "@atomist/sdm-pack-issue";
 
 export function machine(configuration: SoftwareDeliveryMachineConfiguration): SoftwareDeliveryMachine {
     const sdm = createSoftwareDeliveryMachine({
         name: "My Software Delivery Machine",
         configuration,
     });
-    sdm.addExtensionPacks(IssuesSupport);
+    sdm.addExtensionPacks(IssueSupport);
     return sdm;
 };
 ```
