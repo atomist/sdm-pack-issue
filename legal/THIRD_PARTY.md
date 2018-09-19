@@ -1,6 +1,6 @@
-# @atomist/sdm-pack-issues
+# @atomist/sdm-pack-issue
 
-This page details all runtime OSS dependencies of `@atomist/sdm-pack-issues`.
+This page details all runtime OSS dependencies of `@atomist/sdm-pack-issue`.
 
 ## Licenses
 
