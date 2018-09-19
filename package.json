@@ -8,13 +8,13 @@
     "url": "https://atomist.com/"
   },
   "license": "Apache-2.0",
-  "homepage": "https://github.com/atomist/sdm-pack-issues#readme",
+  "homepage": "https://github.com/atomist/sdm-pack-issue#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/atomist/sdm-pack-issues.git"
+    "url": "https://github.com/atomist/sdm-pack-issue.git"
   },
   "bugs": {
-    "url": "https://github.com/atomist/sdm-pack-issues/issues"
+    "url": "https://github.com/atomist/sdm-pack-issue/issues"
   },
   "keywords": [
     "atomist",
