@@ -18,4 +18,5 @@ export { IssueSupport } from "./lib/issue";
 export {
     singleIssueManagingReviewListener,
     multiIssueManagingReviewListener,
+    CategorySortingBodyFormatter,
 } from "./lib/review/issueManagingReviewListeners";

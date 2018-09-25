@@ -15,6 +15,7 @@
  */
 
 import {
+    deepLink,
     GitHubRepoRef,
     Issue,
     logger,
@@ -228,3 +229,18 @@ function openFirst(a: KnownIssue, b: KnownIssue): number {
     }
     return b.number - a.number; // if same state, most recent one first.
 }
+
+export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) => {
+    const grr = rr as GitHubRepoRef;
+    let body = "";
+
+    const uniqueCategories = _.uniq(comments.map(c => c.category)).sort();
+    uniqueCategories.forEach(category => {
+        body += `## ${category}\n`;
+        body += comments
+            .filter(c => c.category === category)
+            .map(c =>
+                `- \`${c.sourceLocation.path || ""}\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`);
+    });
+    return body;
+};
