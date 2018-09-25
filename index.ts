@@ -15,3 +15,7 @@
  */
 
 export { IssueSupport } from "./lib/issue";
+export {
+    singleIssueManagingReviewListener,
+    multiIssueManagingReviewListener,
+} from "./lib/review/issueManagingReviewListeners";
