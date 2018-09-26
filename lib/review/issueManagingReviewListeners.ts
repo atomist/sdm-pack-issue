@@ -244,4 +244,3 @@ export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) =>
     });
     return body;
 };
-
