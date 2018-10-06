@@ -29,8 +29,8 @@ import {
     ReviewListener,
     ReviewListenerInvocation,
 } from "@atomist/sdm";
+import { github } from "@atomist/sdm-core";
 import Push = OnPushToAnyBranch.Push;
-import { authHeaders } from "@atomist/sdm-core/lib/util/github/ghub";
 import * as slack from "@atomist/slack-messages";
 import axios from "axios";
 import * as stringify from "json-stringify-safe";
@@ -152,6 +152,58 @@ export function multiIssueManagingReviewListener(commentFilter: CommentFilter,
     };
 }
 
+/**
+ * Take this subset of issues and maintain an issue for each category
+ * @param {CommentFilter} commentFilter
+ * @param {CommentsFormatter} bodyFormatter
+ * @return {ReviewListener}
+ */
+export function singleIssuePerCategoryManagingReviewListener(
+    commentFilter: CommentFilter = () => true,
+    bodyFormatter: CommentsFormatter = SubCategorySortingBodyFormatter): ReviewListener {
+    return async (ri: ReviewListenerInvocation) => {
+        if (ri.push.branch !== ri.push.repo.defaultBranch) {
+            // We only care about pushes to the default branch
+            return;
+        }
+        const relevantCategories = _.groupBy(ri.review.comments.filter(commentFilter), "category");
+
+        for (const category in relevantCategories) {
+            if (relevantCategories.hasOwnProperty(category)) {
+                const relevantComments = relevantCategories[category];
+                const title = `Review: ${category}`;
+                const existingIssue = await findIssue(ri.credentials, ri.id as GitHubRepoRef, title);
+
+                // there are some comments
+                if (!existingIssue) {
+                    const issue = {
+                        title,
+                        body: bodyFormatter(relevantComments, ri.id),
+                        // labels? assignees?
+                    };
+                    logger.info("Creating issue %j from review comment", issue);
+                    await createIssue(ri.credentials, ri.id, issue);
+                } else {
+                    // Update the issue if necessary, reopening it if need be
+                    const body = bodyFormatter(relevantComments, ri.id);
+                    if (body !== existingIssue.body) {
+                        logger.info("Updating issue %d with the latest ", existingIssue.number);
+                        await updateIssue(ri.credentials, ri.id,
+                            {
+                                ...existingIssue,
+                                state: "open",
+                                body,
+                            });
+                    } else {
+                        logger.info("Not updating issue %d as body has not changed", existingIssue.number);
+                    }
+                }
+                // Should we catch exceptions and not fail the Goal if this doesn't work?
+            }
+        }
+    };
+}
+
 function who(push: Push): string {
     const screenName: string = _.get(push, "after.committer.person.chatId.screenName");
     if (screenName) {
@@ -182,7 +234,7 @@ async function updateIssue(credentials: ProjectOperationCredentials,
     const grr = rr as GitHubRepoRef;
     const url = encodeURI(`${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues/${issue.number}`);
     logger.info(`Request to '${url}' to update issue`);
-    await axios.patch(url, safeIssue, authHeaders(token)).catch(err => {
+    await axios.patch(url, safeIssue, github.authHeaders(token)).catch(err => {
         logger.error("Failure updating issue. response: %s", stringify(err.response.data));
         throw err;
     });
@@ -195,7 +247,7 @@ async function createIssue(credentials: ProjectOperationCredentials,
     const grr = rr as GitHubRepoRef;
     const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues`;
     logger.info(`Request to '${url}' to create issue`);
-    await axios.post(url, issue, authHeaders(token));
+    await axios.post(url, issue, github.authHeaders(token));
 }
 
 // find the most recent open (or closed, if none are open) issue with precisely this title
@@ -207,7 +259,7 @@ async function findIssue(credentials: ProjectOperationCredentials,
     const url = encodeURI(
         `${grr.scheme}${grr.apiBase}/search/issues?q=is:issue+user:${rr.owner}+repo:${rr.repo}+"${title}"`);
     logger.info(`Request to '${url}' to get issues`);
-    const returnedIssues: KnownIssue[] = await axios.get(url, authHeaders(token)).then(r => r.data.items);
+    const returnedIssues: KnownIssue[] = await axios.get(url, github.authHeaders(token)).then(r => r.data.items);
     return returnedIssues.filter(i =>
         i.title === title
         && i.url.includes(`/${rr.owner}/${rr.repo}/issues/`))
@@ -239,6 +291,21 @@ export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) =>
         body += `## ${category}\n`;
         body += comments
             .filter(c => c.category === category)
+            .map(c =>
+                `- \`${c.sourceLocation.path || ""}\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`);
+    });
+    return body;
+};
+
+export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr) => {
+    const grr = rr as GitHubRepoRef;
+    let body = "";
+
+    const uniqueCategories = _.uniq(comments.map(c => c.subcategory)).sort();
+    uniqueCategories.forEach(category => {
+        body += `## ${category}\n`;
+        body += comments
+            .filter(c => c.subcategory === category)
             .map(c =>
                 `- \`${c.sourceLocation.path || ""}\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`);
     });
