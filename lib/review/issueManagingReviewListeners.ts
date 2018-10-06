@@ -293,7 +293,8 @@ export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) =>
         body += comments
             .filter(c => c.category === category)
             .map(c =>
-                `- \`${c.sourceLocation.path || ""}\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`);
+                `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
+                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
     });
     return body;
 };
@@ -308,7 +309,8 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
         body += comments
             .filter(c => c.subcategory === category)
             .map(c =>
-                `- \`${c.sourceLocation.path || ""}\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`);
+                `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
+                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
     });
     return body;
 };
