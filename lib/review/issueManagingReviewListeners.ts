@@ -28,6 +28,7 @@ import {
     OnPushToAnyBranch,
     ReviewListener,
     ReviewListenerInvocation,
+    ReviewListenerRegistration,
 } from "@atomist/sdm";
 import { github } from "@atomist/sdm-core";
 import Push = OnPushToAnyBranch.Push;
@@ -310,4 +311,9 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
                 `- \`${c.sourceLocation.path || ""}\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`);
     });
     return body;
+};
+
+export const SingleIssuePerCategoryManagingReviewListener: ReviewListenerRegistration = {
+    name: "GitHub Issue Review Listener",
+    listener: singleIssuePerCategoryManagingReviewListener(),
 };

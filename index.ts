@@ -21,4 +21,5 @@ export {
     singleIssuePerCategoryManagingReviewListener,
     CategorySortingBodyFormatter,
     SubCategorySortingBodyFormatter,
+    SingleIssuePerCategoryManagingReviewListener,
 } from "./lib/review/issueManagingReviewListeners";
