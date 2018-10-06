@@ -172,21 +172,21 @@ export function singleIssuePerCategoryManagingReviewListener(
         for (const category in relevantCategories) {
             if (relevantCategories.hasOwnProperty(category)) {
                 const relevantComments = relevantCategories[category];
-                const title = `Review: ${category}`;
+                const title = `Code Inspection: ${category}`;
                 const existingIssue = await findIssue(ri.credentials, ri.id as GitHubRepoRef, title);
 
                 // there are some comments
                 if (!existingIssue) {
                     const issue = {
                         title,
-                        body: bodyFormatter(relevantComments, ri.id),
+                        body: `${bodyFormatter(relevantComments, ri.id)}\n\n[atomist:code-inspection]`,
                         // labels? assignees?
                     };
                     logger.info("Creating issue %j from review comment", issue);
                     await createIssue(ri.credentials, ri.id, issue);
                 } else {
                     // Update the issue if necessary, reopening it if need be
-                    const body = bodyFormatter(relevantComments, ri.id);
+                    const body = `${bodyFormatter(relevantComments, ri.id)}\n\n[atomist:code-inspection]`;
                     if (body !== existingIssue.body) {
                         logger.info("Updating issue %d with the latest ", existingIssue.number);
                         await updateIssue(ri.credentials, ri.id,
