@@ -175,7 +175,7 @@ export function singleIssuePerCategoryManagingReviewListener(
         for (const category in relevantCategories) {
             if (relevantCategories.hasOwnProperty(category)) {
 
-                knownIssues = knownIssues.filter(i => !i.body.includes(createTag(category));
+                knownIssues = knownIssues.filter(i => !i.body.includes(createTag(category)));
 
                 const relevantComments = relevantCategories[category];
                 const title = `Code Inspection: ${category}`;
@@ -338,7 +338,7 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
     const grr = rr as GitHubRepoRef;
     let body = "";
 
-    const uniqueCategories = _.uniq(comments.map(c => c.subcategory)).sort();
+    const uniqueCategories = _.uniq(comments.map(c => c.subcategory || "n/a")).sort();
     uniqueCategories.forEach(category => {
         body += `## ${category}\n`;
         body += comments
@@ -350,7 +350,9 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
     return body;
 };
 
-export const SingleIssuePerCategoryManagingReviewListener: ReviewListenerRegistration = {
-    name: "GitHub Issue Review Listener",
-    listener: singleIssuePerCategoryManagingReviewListener(),
+export function singleIssuePerCategoryManaging(source: string): ReviewListenerRegistration {
+    return {
+        name: "GitHub Issue Review Listener",
+        listener: singleIssuePerCategoryManagingReviewListener(source),
+    }
 };
