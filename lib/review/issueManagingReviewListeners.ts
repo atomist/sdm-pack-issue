@@ -175,11 +175,11 @@ export function singleIssuePerCategoryManagingReviewListener(
         for (const category in relevantCategories) {
             if (relevantCategories.hasOwnProperty(category)) {
 
-                knownIssues = knownIssues.filter(i => !i.body.includes(createTag(category)));
-
                 const relevantComments = relevantCategories[category];
                 const title = `Code Inspection: ${category}`;
                 const existingIssue = await findIssue(ri.credentials, ri.id as GitHubRepoRef, title);
+
+                knownIssues = knownIssues.filter(i => i.title !== title);
 
                 // there are some comments
                 if (!existingIssue) {
