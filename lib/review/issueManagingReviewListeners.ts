@@ -31,7 +31,6 @@ import {
     ReviewListenerRegistration,
 } from "@atomist/sdm";
 import { github } from "@atomist/sdm-core";
-import * as slack from "@atomist/slack-messages";
 import axios from "axios";
 import * as stringify from "json-stringify-safe";
 import * as _ from "lodash";
