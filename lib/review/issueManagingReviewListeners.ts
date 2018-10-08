@@ -354,5 +354,5 @@ export function singleIssuePerCategoryManaging(source: string): ReviewListenerRe
     return {
         name: "GitHub Issue Review Listener",
         listener: singleIssuePerCategoryManagingReviewListener(source),
-    }
-};
+    };
+}
