@@ -71,7 +71,7 @@ export function singleIssueManagingReviewListener(commentFilter: CommentFilter,
             if (existingIssue) {
                 logger.info("Closing issue %d because all comments have been addressed", existingIssue.number);
                 const congrats =
-                    `The last review problem was fixed by ${who(ri.push)} when they pushed ${linkToSha(ri.id)}`;
+                    `The last review problem was fixed by @${who(ri.push)} when they pushed ${linkToSha(ri.id)}`;
                 await updateIssue(ri.credentials, ri.id, { ...existingIssue, state: "closed", body: congrats });
             }
             return;
@@ -230,15 +230,15 @@ function createTag(tag: string): string {
 }
 
 function who(push: Push): string {
-    const screenName: string = _.get(push, "after.committer.person.chatId.screenName");
+    const screenName: string = _.get(push, "after.committer.login");
     if (screenName) {
-        return slack.user(screenName);
+        return screenName;
     }
-    return _.get(push, "after.committer.token", "someone");
+    return _.get(push, "after.committer.person.chatId.screenName", "someone");
 }
 
 function linkToSha(id: RemoteRepoRef): string {
-    return slack.url(id.url + "/tree/" + id.sha, id.sha.substr(0, 7));
+    return `[${id.sha.substr(0, 7)}](${id.url + "/tree/" + id.sha})`;
 }
 
 interface KnownIssue extends Issue {
