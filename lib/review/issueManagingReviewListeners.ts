@@ -31,11 +31,11 @@ import {
     ReviewListenerRegistration,
 } from "@atomist/sdm";
 import { github } from "@atomist/sdm-core";
-import Push = OnPushToAnyBranch.Push;
 import * as slack from "@atomist/slack-messages";
 import axios from "axios";
 import * as stringify from "json-stringify-safe";
 import * as _ from "lodash";
+import Push = OnPushToAnyBranch.Push;
 
 export type CommentFilter = (r: ReviewComment) => boolean;
 
@@ -72,7 +72,7 @@ export function singleIssueManagingReviewListener(commentFilter: CommentFilter,
                 logger.info("Closing issue %d because all comments have been addressed", existingIssue.number);
                 const congrats =
                     `The last review problem was fixed by ${who(ri.push)} when they pushed ${linkToSha(ri.id)}`;
-                await updateIssue(ri.credentials, ri.id, {...existingIssue, state: "closed", body: congrats});
+                await updateIssue(ri.credentials, ri.id, { ...existingIssue, state: "closed", body: congrats });
             }
             return;
         }
@@ -160,6 +160,7 @@ export function multiIssueManagingReviewListener(commentFilter: CommentFilter,
  * @return {ReviewListener}
  */
 export function singleIssuePerCategoryManagingReviewListener(
+    source: string,
     commentFilter: CommentFilter = () => true,
     bodyFormatter: CommentsFormatter = SubCategorySortingBodyFormatter): ReviewListener {
     return async (ri: ReviewListenerInvocation) => {
@@ -168,9 +169,14 @@ export function singleIssuePerCategoryManagingReviewListener(
             return;
         }
         const relevantCategories = _.groupBy(ri.review.comments.filter(commentFilter), "category");
+        const tag = createTag(source);
+        let knownIssues = await findIssues(ri.credentials, ri.id as GitHubRepoRef, tag);
 
         for (const category in relevantCategories) {
             if (relevantCategories.hasOwnProperty(category)) {
+
+                knownIssues = knownIssues.filter(i => !i.body.includes(createTag(category));
+
                 const relevantComments = relevantCategories[category];
                 const title = `Code Inspection: ${category}`;
                 const existingIssue = await findIssue(ri.credentials, ri.id as GitHubRepoRef, title);
@@ -179,14 +185,14 @@ export function singleIssuePerCategoryManagingReviewListener(
                 if (!existingIssue) {
                     const issue = {
                         title,
-                        body: `${bodyFormatter(relevantComments, ri.id)}\n\n[atomist:code-inspection]`,
+                        body: `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`,
                         // labels? assignees?
                     };
                     logger.info("Creating issue %j from review comment", issue);
                     await createIssue(ri.credentials, ri.id, issue);
                 } else {
                     // Update the issue if necessary, reopening it if need be
-                    const body = `${bodyFormatter(relevantComments, ri.id)}\n\n[atomist:code-inspection]`;
+                    const body = `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`;
                     if (body !== existingIssue.body) {
                         logger.info("Updating issue %d with the latest ", existingIssue.number);
                         await updateIssue(ri.credentials, ri.id,
@@ -199,10 +205,25 @@ export function singleIssuePerCategoryManagingReviewListener(
                         logger.info("Not updating issue %d as body has not changed", existingIssue.number);
                     }
                 }
-                // Should we catch exceptions and not fail the Goal if this doesn't work?
             }
         }
+
+        // Close the remaining issues
+        if (knownIssues.length > 0) {
+            for (const existingIssue of knownIssues) {
+                await updateIssue(ri.credentials, ri.id,
+                    {
+                        ...existingIssue,
+                        state: "closed",
+                    });
+            }
+        }
+
     };
+}
+
+function createTag(tag: string): string {
+    return `[atomist:code-inspection=${tag.toLowerCase()}]`;
 }
 
 function who(push: Push): string {
@@ -267,6 +288,20 @@ async function findIssue(credentials: ProjectOperationCredentials,
         .sort(openFirst)[0];
 }
 
+async function findIssues(credentials: ProjectOperationCredentials,
+                          rr: RemoteRepoRef,
+                          body: string): Promise<KnownIssue[]> {
+    const token = (credentials as TokenCredentials).token;
+    const grr = rr as GitHubRepoRef;
+    const url = encodeURI(
+        `${grr.scheme}${grr.apiBase}/search/issues?q=is:issue+user:${rr.owner}+repo:${rr.repo}+"${body}"`);
+    logger.info(`Request to '${url}' to get issues`);
+    const returnedIssues: KnownIssue[] = await axios.get(url, github.authHeaders(token)).then(r => r.data.items);
+    return returnedIssues.filter(i =>
+        i.body.includes(body)
+        && i.url.includes(`/${rr.owner}/${rr.repo}/issues/`));
+}
+
 /**
  * Compare giving open issues a lower sort order
  * @param {KnownIssue} a
@@ -294,7 +329,7 @@ export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) =>
             .filter(c => c.category === category)
             .map(c =>
                 `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
-                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
+                    }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
     });
     return body;
 };
@@ -310,7 +345,7 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
             .filter(c => c.subcategory === category)
             .map(c =>
                 `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
-                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
+                    }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
     });
     return body;
 };
