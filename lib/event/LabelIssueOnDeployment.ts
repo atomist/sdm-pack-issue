@@ -223,7 +223,7 @@ async function retrieveIssue(owner: string,
 export function labelIssuesOnDeployment(sdm: SoftwareDeliveryMachine):
     EventHandlerRegistration<schema.LabelIssuesOnDeployment.Subscription, CredentialsResolver> {
     return {
-        name: "LabelIssuesOnDeplomynet",
+        name: "LabelIssuesOnDeployment",
         description: "Label issues with environment when deployments are recorded",
         tags: ["github", "issue", "deployment"],
         subscription: GraphQL.subscription("LabelIssuesOnDeployment"),
