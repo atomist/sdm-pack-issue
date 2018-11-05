@@ -27,3 +27,5 @@ export {
     CommentFormatter,
     CommentsFormatter,
 } from "./lib/review/issueManagingReviewListeners";
+
+export * from "./lib/review/legacyFiltering";
