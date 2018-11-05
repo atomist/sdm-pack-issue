@@ -36,6 +36,8 @@ import * as stringify from "json-stringify-safe";
 import * as _ from "lodash";
 import Push = OnPushToAnyBranch.Push;
 
+export type BranchFilter = (push: OnPushToAnyBranch.Push) => boolean;
+
 export type CommentFilter = (r: ReviewComment) => boolean;
 
 /**
@@ -160,32 +162,36 @@ export function multiIssueManagingReviewListener(commentFilter: CommentFilter,
  */
 export function singleIssuePerCategoryManagingReviewListener(
     source: string,
+    assignIssue: boolean = false,
+    branchFilter: BranchFilter = push => push.branch === push.repo.defaultBranch,
     commentFilter: CommentFilter = () => true,
     bodyFormatter: CommentsFormatter = SubCategorySortingBodyFormatter): ReviewListener {
     return async (ri: ReviewListenerInvocation) => {
-        if (ri.push.branch !== ri.push.repo.defaultBranch) {
-            // We only care about pushes to the default branch
-            return;
-        }
+
         const relevantCategories = _.groupBy(ri.review.comments.filter(commentFilter), "category");
-        const tag = createTag(source);
+        const tag = createTag(source, ri.push);
         let knownIssues = await findIssues(ri.credentials, ri.id as GitHubRepoRef, tag);
 
         for (const category in relevantCategories) {
             if (relevantCategories.hasOwnProperty(category)) {
 
                 const relevantComments = relevantCategories[category];
-                const title = `Code Inspection: ${category}`;
+                const title = `Code Inspection: ${category} on ${ri.push.branch}`;
                 const existingIssue = await findIssue(ri.credentials, ri.id as GitHubRepoRef, title);
 
                 knownIssues = knownIssues.filter(i => i.title !== title);
 
+                const isBug = relevantComments.some(c => c.severity === "error");
+                const isEnhancement = relevantComments.some(c => c.severity === "warn");
+                const labels = isBug ? ["bug"] : (isEnhancement ? ["enhancement"] : []);
+
                 // there are some comments
                 if (!existingIssue) {
-                    const issue = {
+                    const issue: Issue = {
                         title,
                         body: `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`,
-                        // labels? assignees?
+                        assignees: _.uniq(ri.push.commits.map(c => c.author.login)),
+                        labels,
                     };
                     logger.info("Creating issue %j from review comment", issue);
                     await createIssue(ri.credentials, ri.id, issue);
@@ -199,6 +205,8 @@ export function singleIssuePerCategoryManagingReviewListener(
                                 ...existingIssue,
                                 state: "open",
                                 body,
+                                assignees: _.uniq(ri.push.commits.map(c => c.author.login)),
+                                labels,
                             });
                     } else {
                         logger.info("Not updating issue %d as body has not changed", existingIssue.number);
@@ -224,8 +232,8 @@ export function singleIssuePerCategoryManagingReviewListener(
     };
 }
 
-function createTag(tag: string): string {
-    return `[atomist:code-inspection=${tag.toLowerCase()}]`;
+function createTag(tag: string, push: OnPushToAnyBranch.Push): string {
+    return `[atomist:code-inspection:${push.branch.toLowerCase()}=${tag.toLowerCase()}]`;
 }
 
 function who(push: Push): string {
@@ -352,9 +360,12 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
     return body;
 };
 
-export function singleIssuePerCategoryManaging(source: string): ReviewListenerRegistration {
+export function singleIssuePerCategoryManaging(
+    source: string,
+    assign: boolean = true,
+    branchFilter: BranchFilter = p => p.repo.defaultBranch === p.branch): ReviewListenerRegistration {
     return {
         name: "GitHub Issue Review Listener",
-        listener: singleIssuePerCategoryManagingReviewListener(source),
+        listener: singleIssuePerCategoryManagingReviewListener(source, assign, branchFilter),
     };
 }

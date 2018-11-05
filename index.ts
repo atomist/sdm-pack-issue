@@ -22,4 +22,8 @@ export {
     CategorySortingBodyFormatter,
     SubCategorySortingBodyFormatter,
     singleIssuePerCategoryManaging,
+    BranchFilter,
+    CommentFilter,
+    CommentFormatter,
+    CommentsFormatter,
 } from "./lib/review/issueManagingReviewListeners";
