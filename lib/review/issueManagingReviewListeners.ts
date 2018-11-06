@@ -282,14 +282,19 @@ async function createIssue(credentials: ProjectOperationCredentials,
     await axios.post(url, issue, github.authHeaders(token));
 }
 
+function searchIssueRepoUrl(rr: GitHubRepoRef, tail?: string): string {
+    const raw = `${rr.scheme}${rr.apiBase}/search/issues?q=is:issue+repo:${rr.owner}/${rr.repo}` +
+        (tail ? tail : "");
+    return encodeURI(raw);
+}
+
 // find the most recent open (or closed, if none are open) issue with precisely this title
 async function findIssue(credentials: ProjectOperationCredentials,
                          rr: RemoteRepoRef,
                          title: string): Promise<KnownIssue> {
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
-    const url = encodeURI(
-        `${grr.scheme}${grr.apiBase}/search/issues?q=is:issue+user:${rr.owner}+repo:${rr.repo}+"${title}"`);
+    const url = searchIssueRepoUrl(grr, `+"${title}"`);
     logger.info(`Request to '${url}' to get issues`);
     const returnedIssues: KnownIssue[] = await axios.get(url, github.authHeaders(token)).then(r => r.data.items);
     return returnedIssues.filter(i =>
@@ -303,8 +308,7 @@ async function findIssues(credentials: ProjectOperationCredentials,
                           body: string): Promise<KnownIssue[]> {
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
-    const url = encodeURI(
-        `${grr.scheme}${grr.apiBase}/search/issues?q=is:issue+user:${rr.owner}+repo:${rr.repo}+"${body}"`);
+    const url = searchIssueRepoUrl(grr, `+"${body}"`);
     logger.info(`Request to '${url}' to get issues`);
     const returnedIssues: KnownIssue[] = await axios.get(url, github.authHeaders(token)).then(r => r.data.items);
     return returnedIssues.filter(i =>
@@ -339,7 +343,7 @@ export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) =>
             .filter(c => c.category === category)
             .map(c =>
                 `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
-                    }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
+                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
     });
     return body;
 };
@@ -355,7 +359,7 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
             .filter(c => c.subcategory === category)
             .map(c =>
                 `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
-                    }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
+                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
     });
     return body;
 };
