@@ -114,7 +114,7 @@ function legacyFilteringBaselineAutofix(inspectGoal: AutoCodeInspection): Autofi
         name: "legacyFilter",
         transform: async (p, i) => {
             await Promise.all(inspectGoal.registrations.map(rr => establishBaseline(rr, p, i)));
-            return i.addressChannels(`Baseline established with ${inspectGoal.registrations} registrations`);
+            return i.addressChannels(`Baseline established with ${inspectGoal.registrations.length} registrations`);
         },
     };
 }
