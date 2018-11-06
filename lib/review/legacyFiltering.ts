@@ -114,7 +114,7 @@ function legacyFilteringBaselineAutofix(inspectGoal: AutoCodeInspection): Autofi
         name: "legacyFilter",
         transform: async (p, i) => {
             await Promise.all(inspectGoal.registrations.map(rr => establishBaseline(rr, p, i)));
-            return i.addressChannels(`Baseline established with ${inspectGoal.registrations.length} registrations`);
+            await i.addressChannels(`Baseline established with ${inspectGoal.registrations.length} registrations`);
         },
     };
 }
@@ -177,6 +177,14 @@ function areEqual(a: SourceLocation, b: SourceLocation): boolean {
         (a.path === b.path && a.offset === b.offset);
 }
 
+/**
+ * Create a baseline file for the given reviewer registration, by
+ * running it against the project
+ * @param {ReviewerRegistration} rr
+ * @param {Project} p
+ * @param {PushAwareParametersInvocation<any>} papi
+ * @return {Promise<void>}
+ */
 async function establishBaseline(rr: ReviewerRegistration,
                                  p: Project,
                                  papi: PushAwareParametersInvocation<any>): Promise<void> {
