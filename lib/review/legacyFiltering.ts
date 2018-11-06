@@ -66,7 +66,7 @@ export function withLegacyFiltering(inspectGoal: AutoCodeInspection): AutoCodeIn
  */
 export function legacyFiltering(wellKnownGoals: WellKnownGoals): ExtensionPack {
     return {
-        ...metadata("legacy-filtering),
+        ...metadata("legacy-filtering"),
         configure: sdm => {
             if (!!wellKnownGoals.inspectGoal && !!wellKnownGoals.autofixGoal) {
                 wellKnownGoals.autofixGoal.with(legacyFilteringBaselineAutofix(wellKnownGoals.inspectGoal));
