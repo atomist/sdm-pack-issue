@@ -190,10 +190,12 @@ async function establishBaseline(rr: ReviewerRegistration,
                                  papi: PushAwareParametersInvocation<any>): Promise<void> {
     const legacyFile = legacyFileNameFor(rr);
     if (!await p.hasFile(legacyFile)) {
-        await papi.addressChannels(`Running ${rr.name} on project at ${
+        await papi.addressChannels(`Running reviewer ${rr.name} on project at ${
             p.id.url} to establish baseline: file is \`${legacyFile}\``);
         const review: ProjectReview = await rr.inspection(p, papi);
         const json = JSON.stringify(review.comments, undefined, 2);
+        await papi.addressChannels(`Baseline from reviewer ${rr.name} on project at ${
+            p.id.url} had ${review.comments.length} comments`);
         await p.addFile(legacyFile, json);
     }
 
