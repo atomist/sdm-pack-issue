@@ -14,84 +14,21 @@
  * limitations under the License.
  */
 
-import {
-    logger,
-    ProjectReview,
-    RepoRef,
-} from "@atomist/automation-client";
+import { logger, Project, ProjectReview, ReviewComment, SourceLocation } from "@atomist/automation-client";
 import {
     AutoCodeInspection,
     AutofixRegistration,
-    hasFile,
-    not,
+    CodeTransformRegistration,
+    ExtensionPack,
+    metadata,
     PushAwareParametersInvocation,
     ReviewerRegistration,
+    WellKnownGoals,
 } from "@atomist/sdm";
-import * as _ from "lodash";
 
 /**
- * File containing legacy issues. We won't flag them again until their
- * locations are changed.
- * @type {string}
- */
-const LegacyFile = ".atomist/legacyIssues.json";
-
-function legacyFilteringReviewerRegistration(rr: ReviewerRegistration): ReviewerRegistration {
-    return {
-        name: rr.name,
-        pushTest: rr.pushTest,
-        inspection: async (p, papi) => {
-            const raw = await rr.inspection(p, papi);
-            return filterOutLegacyComments(raw, papi);
-        },
-        onInspectionResult: rr.onInspectionResult,
-        parametersInstance: rr.parametersInstance,
-    };
-}
-
-async function filterOutLegacyComments(pr: ProjectReview,
-                                       papi: PushAwareParametersInvocation<any>): Promise<ProjectReview> {
-    if (!papi.push) {
-        logger.info("Can't filter out legacy comments: Push is not available");
-        return pr;
-    }
-    const legacyFile = await papi.push.project.getFile(LegacyFile);
-    const legacyIssues: ProjectReview = !!legacyFile ?
-        JSON.parse(await legacyFile.getContent()) :
-        { repoId: pr.repoId, comments: [] };
-    return {
-        repoId: pr.repoId,
-        comments: pr.comments.filter(c => {
-            return !legacyIssues.comments.some(lc =>
-                lc.category === c.category &&
-                lc.subcategory === c.subcategory &&
-                JSON.stringify(lc.sourceLocation) === JSON.stringify(c.sourceLocation));
-        }),
-    };
-}
-
-/**
- * If there's no legacy autofix file, run all reviewers and create one for a baseline
- */
-export function legacyFilteringBaselineAutofix(inspectGoal: AutoCodeInspection): AutofixRegistration {
-    return {
-        name: "legacyFilter",
-        pushTest: not(hasFile(LegacyFile)),
-        transform: async (p, i) => {
-            const reviewers = inspectGoal.registrations;
-            await i.addressChannels(`Running ${reviewers.length} reviewers on project at ${
-                p.id.url} to establish baseline`);
-            const reviews: ProjectReview[] =
-                await Promise.all(reviewers.map(rr => rr.inspection(p, i)));
-            const consolidated = consolidate(reviews, p.id);
-            const json = JSON.stringify(consolidated);
-            await p.addFile(LegacyFile, json);
-        },
-    };
-}
-
-/**
- * Make this goal legacy filtering.
+ * Make this AutoInspect goal filter out legacy issues. Combine with
+ * legacy autofix.
  * @param {AutoCodeInspection} inspectGoal
  * @return {AutoCodeInspection}
  */
@@ -106,9 +43,137 @@ export function withLegacyFiltering(inspectGoal: AutoCodeInspection): AutoCodeIn
     return i;
 }
 
-function consolidate(reviews: ProjectReview[], repoId: RepoRef): ProjectReview {
+/**
+ * Legacy filtering extension pack. Adds autofix to create baseline files
+ * and command to remove baseline files.
+ * Also be sure to wrap the inspectGoal before registration
+ * with withLegacyFiltering
+ * @param {WellKnownGoals} wellKnownGoals
+ * @return {ExtensionPack}
+ */
+export function legacyFiltering(wellKnownGoals: WellKnownGoals): ExtensionPack {
     return {
-        repoId,
-        comments: _.flatten(reviews.map(review => review.comments)),
+        ...metadata(),
+        name: "@atomist/sdm-pack-issue/legacyFiltering",
+        configure: sdm => {
+            if (!!wellKnownGoals.inspectGoal && !!wellKnownGoals.autofixGoal) {
+                wellKnownGoals.autofixGoal.with(legacyFilteringBaselineAutofix(wellKnownGoals.inspectGoal));
+                sdm.addCodeTransformCommand(clearBaselineCommand(wellKnownGoals.inspectGoal));
+            }
+            return sdm;
+        },
     };
+}
+
+/**
+ * Command to clear baseline files. Clears all unless one is specified.
+ * @param {AutoCodeInspection} inspectGoal
+ * @return {CodeTransformRegistration<{reviewerName?: string}>}
+ */
+function clearBaselineCommand(inspectGoal: AutoCodeInspection): CodeTransformRegistration<{ reviewerName?: string }> {
+    return {
+        name: "clearBaseline",
+        intent: "clear review baseline",
+        description: "Clear the review baseline files. Clears all unless a single reviewerName is provided",
+        parameters: {
+            reviewerName: {
+                description: "Name of single reviewer to remove. Remove all if not specified.",
+                required: false,
+            },
+        },
+        transform: async (p, i) => {
+            for (const rr of inspectGoal.registrations) {
+                if (!i.parameters.reviewerName || i.parameters.reviewerName === rr.name) {
+                    const legacyFile = legacyFileNameFor(rr);
+                    await p.deleteFile(legacyFile);
+                    await i.addressChannels(`Review baseline file \`${legacyFile}\``);
+                }
+            }
+        },
+    };
+}
+
+/**
+ * Run any reviewers for which there isn't a legacy autofix file, and create one for a baseline
+ */
+function legacyFilteringBaselineAutofix(inspectGoal: AutoCodeInspection): AutofixRegistration {
+    return {
+        name: "legacyFilter",
+        transform: async (p, i) => {
+            await Promise.all(inspectGoal.registrations.map(rr => establishBaseline(rr, p, i)));
+            return i.addressChannels(`Baseline established with ${inspectGoal.registrations} registrations`);
+        },
+    };
+}
+
+/**
+ * File containing legacy issues for a given reviewer.
+ * We won't flag them again until their
+ * locations are changed.
+ * @type {string}
+ */
+function legacyFileNameFor(rr: ReviewerRegistration): string {
+    return `.atomist/legacyIssues_${rr.name}.json`;
+}
+
+function legacyFilteringReviewerRegistration(rr: ReviewerRegistration): ReviewerRegistration {
+    return {
+        name: rr.name,
+        pushTest: rr.pushTest,
+        inspection: async (p, papi) => {
+            const raw = await rr.inspection(p, papi);
+            return filterOutLegacyComments(rr, raw, papi);
+        },
+        onInspectionResult: rr.onInspectionResult,
+        parametersInstance: rr.parametersInstance,
+    };
+}
+
+/**
+ * Filter out legacy comments for this review
+ * @param {ReviewerRegistration} rr
+ * @param {ProjectReview} pr
+ * @param {PushAwareParametersInvocation<any>} papi
+ * @return {Promise<ProjectReview>}
+ */
+async function filterOutLegacyComments(rr: ReviewerRegistration,
+                                       pr: ProjectReview,
+                                       papi: PushAwareParametersInvocation<any>): Promise<ProjectReview> {
+    if (!papi.push) {
+        logger.info("Can't filter out legacy comments: Push is not available");
+        return pr;
+    }
+    const legacyFile = await papi.push.project.getFile(legacyFileNameFor(rr));
+    const legacyComments: ReviewComment[] = !!legacyFile ?
+        JSON.parse(await legacyFile.getContent()) :
+        [];
+    return {
+        repoId: pr.repoId,
+        comments: pr.comments.filter(c => {
+            return !legacyComments.some(lc =>
+                lc.category === c.category &&
+                lc.subcategory === c.subcategory &&
+                lc.detail === c.detail &&
+                areEqual(lc.sourceLocation, c.sourceLocation));
+        }),
+    };
+}
+
+function areEqual(a: SourceLocation, b: SourceLocation): boolean {
+    return a === b ||
+        (a.path === b.path && a.offset === b.offset);
+}
+
+async function establishBaseline(rr: ReviewerRegistration,
+                                 p: Project,
+                                 papi: PushAwareParametersInvocation<any>): Promise<void> {
+    const legacyFile = legacyFileNameFor(rr);
+    if (!await p.hasFile(legacyFile)) {
+        await papi.addressChannels(`Running ${rr.name} on project at ${
+            p.id.url} to establish baseline: file is \`${legacyFile}\``);
+        const review: ProjectReview = await rr.inspection(p, papi);
+        const json = JSON.stringify(review.comments, undefined, 2);
+        await p.addFile(legacyFile, json);
+    }
+
 }
