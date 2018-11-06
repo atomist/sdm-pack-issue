@@ -25,7 +25,7 @@ import {
     AutoCodeInspection,
     AutofixRegistration,
     CodeTransformRegistration,
-    ExtensionPack,
+    ExtensionPack, FulfillableGoalDetails,
     metadata,
     PushAwareParametersInvocation,
     ReviewerRegistration,
@@ -39,7 +39,13 @@ import {
  * @return {AutoCodeInspection}
  */
 export function withLegacyFiltering(inspectGoal: AutoCodeInspection): AutoCodeInspection {
-    const i = new AutoCodeInspection(inspectGoal.definition, ...inspectGoal.dependsOn);
+    // TODO this typing is messy
+    // tslint:disable-next-line:no-object-literal-type-assertion
+    const i = new AutoCodeInspection({
+            ...inspectGoal.definition,
+            uniqueName: inspectGoal.uniqueName + "legacyFilter",
+        } as FulfillableGoalDetails,
+        ...inspectGoal.dependsOn);
     for (const r of inspectGoal.registrations) {
         i.with(legacyFilteringReviewerRegistration(r));
     }
@@ -78,7 +84,7 @@ export function legacyFiltering(wellKnownGoals: WellKnownGoals): ExtensionPack {
  */
 function clearBaselineCommand(inspectGoal: AutoCodeInspection): CodeTransformRegistration<{ reviewerName?: string }> {
     return {
-        name: "clearBaseline",
+        name: "ClearBaseline",
         intent: "clear review baseline",
         description: "Clear the review baseline files. Clears all unless a single reviewerName is provided",
         parameters: {
