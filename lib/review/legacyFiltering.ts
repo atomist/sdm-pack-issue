@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import { logger, Project, ProjectReview, ReviewComment, SourceLocation } from "@atomist/automation-client";
+import {
+    logger,
+    Project,
+    ProjectReview,
+    ReviewComment,
+    SourceLocation,
+} from "@atomist/automation-client";
 import {
     AutoCodeInspection,
     AutofixRegistration,
