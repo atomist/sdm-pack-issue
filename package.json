@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@atomist/automation-client": "1.0.0-RC.2",
-    "@atomist/sdm": "1.0.0-RC.2",
+    "@atomist/sdm": "https://registry.npmjs.org/@atomist/sdm/-/@atomist/sdm-1.0.0-master.20181105092518.tgz",
     "@atomist/sdm-core": "1.0.0-RC.2",
     "@types/mocha": "^5.2.5",
     "espower-typescript": "^9.0.0",
@@ -98,4 +98,4 @@
     ],
     "all": true
   }
-} 
+}
