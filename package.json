@@ -26,16 +26,16 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "dependencies": {
-    "@octokit/rest": "^15.11.4",
+    "@octokit/rest": "^15.16.1",
     "axios": "^0.18.0",
     "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.11"
   },
   "peerDependencies": {
-    "@atomist/automation-client": "=>1.0.1",
-    "@atomist/sdm": "=>1.0.1",
+    "@atomist/automation-client": ">=1.0.1",
+    "@atomist/sdm": ">=1.0.1",
     "@atomist/slack-messages": ">=1.0.1",
-    "@atomist/sdm-core": "=>1.0.1"
+    "@atomist/sdm-core": ">=1.0.1"
   },
   "devDependencies": {
     "@atomist/automation-client": "^1.0.1",
