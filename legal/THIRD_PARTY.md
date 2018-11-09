@@ -20,7 +20,7 @@ This page details all runtime OSS dependencies of `@atomist/sdm-pack-issue`.
 |[CC0-1.0](#cc0-10)|2|
 |[GPL-3.0](#gpl-30)|3|
 |[ISC](#isc)|114|
-|[MIT](#mit)|623|
+|[MIT](#mit)|622|
 |[Public Domain](#public-domain)|1|
 |[Unlicense](#unlicense)|1|
 |[WTFPL](#wtfpl)|3|
@@ -281,7 +281,6 @@ MIT License - [http://www.opensource.org/licenses/MIT](http://www.opensource.org
 | Name | Version | Publisher | Repository |
 |------|---------|-----------|------------|
 |`@octokit/rest`|`14.0.9`|Gregor Martynus|[https://github.com/octokit/rest.js](https://github.com/octokit/rest.js)|
-|`@octokit/rest`|`15.12.0`|Gregor Martynus|[https://github.com/octokit/rest.js](https://github.com/octokit/rest.js)|
 |`@octokit/rest`|`15.16.1`|Gregor Martynus|[https://github.com/octokit/rest.js](https://github.com/octokit/rest.js)|
 |`@typed/curry`|`1.0.1`|Tylor Steinberger|[https://github.com/TylorS/typed-curry](https://github.com/TylorS/typed-curry)|
 |`@types/app-root-path`|`1.2.4`|Shant Marouti|[https://github.com/DefinitelyTyped/DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped)|
