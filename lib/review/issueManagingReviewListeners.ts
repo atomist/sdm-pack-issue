@@ -19,10 +19,9 @@ import {
     GitHubRepoRef,
     Issue,
     logger,
-    ProjectOperationCredentials,
     RemoteRepoRef,
     ReviewComment,
-    TokenCredentials,
+    reviewCommentSorter,
 } from "@atomist/automation-client";
 import {
     OnPushToAnyBranch,
@@ -30,11 +29,13 @@ import {
     ReviewListenerInvocation,
     ReviewListenerRegistration,
 } from "@atomist/sdm";
-import { github } from "@atomist/sdm-core";
-import axios from "axios";
-import * as stringify from "json-stringify-safe";
 import * as _ from "lodash";
-import Push = OnPushToAnyBranch.Push;
+import {
+    createIssue,
+    findIssue,
+    findIssues,
+    updateIssue,
+} from "./issue";
 
 export type BranchFilter = (push: OnPushToAnyBranch.Push) => boolean;
 
@@ -236,7 +237,7 @@ function createTag(tag: string, push: OnPushToAnyBranch.Push): string {
     return `[atomist:code-inspection:${push.branch.toLowerCase()}=${tag.toLowerCase()}]`;
 }
 
-function who(push: Push): string {
+function who(push: OnPushToAnyBranch.Push): string {
     const screenName: string = _.get(push, "after.committer.login");
     if (screenName) {
         return screenName;
@@ -248,102 +249,52 @@ function linkToSha(id: RemoteRepoRef): string {
     return `[${id.sha.substr(0, 7)}](${id.url + "/tree/" + id.sha})`;
 }
 
-interface KnownIssue extends Issue {
-    state: "open" | "closed";
-    number: number;
-    url: string;
-}
-
-// update the state and body of an issue.
-async function updateIssue(credentials: ProjectOperationCredentials,
-                           rr: RemoteRepoRef,
-                           issue: KnownIssue): Promise<void> {
-    const safeIssue = {
-        state: issue.state,
-        body: issue.body,
-    };
-    const token = (credentials as TokenCredentials).token;
-    const grr = rr as GitHubRepoRef;
-    const url = encodeURI(`${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues/${issue.number}`);
-    logger.info(`Request to '${url}' to update issue`);
-    await axios.patch(url, safeIssue, github.authHeaders(token)).catch(err => {
-        logger.error("Failure updating issue. response: %s", stringify(err.response.data));
-        throw err;
-    });
-}
-
-async function createIssue(credentials: ProjectOperationCredentials,
-                           rr: RemoteRepoRef,
-                           issue: Issue): Promise<void> {
-    const token = (credentials as TokenCredentials).token;
-    const grr = rr as GitHubRepoRef;
-    const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues`;
-    logger.info(`Request to '${url}' to create issue`);
-    await axios.post(url, issue, github.authHeaders(token));
-}
-
-function searchIssueRepoUrl(rr: GitHubRepoRef, tail?: string): string {
-    const raw = `${rr.scheme}${rr.apiBase}/search/issues?q=is:issue+repo:${rr.owner}/${rr.repo}` +
-        (tail ? tail : "");
-    return encodeURI(raw);
-}
-
-// find the most recent open (or closed, if none are open) issue with precisely this title
-async function findIssue(credentials: ProjectOperationCredentials,
-                         rr: RemoteRepoRef,
-                         title: string): Promise<KnownIssue> {
-    const token = (credentials as TokenCredentials).token;
-    const grr = rr as GitHubRepoRef;
-    const url = searchIssueRepoUrl(grr, `+"${title}"`);
-    logger.info(`Request to '${url}' to get issues`);
-    const returnedIssues: KnownIssue[] = await axios.get(url, github.authHeaders(token)).then(r => r.data.items);
-    return returnedIssues.filter(i =>
-        i.title === title
-        && i.url.includes(`/${rr.owner}/${rr.repo}/issues/`))
-        .sort(openFirst)[0];
-}
-
-async function findIssues(credentials: ProjectOperationCredentials,
-                          rr: RemoteRepoRef,
-                          body: string): Promise<KnownIssue[]> {
-    const token = (credentials as TokenCredentials).token;
-    const grr = rr as GitHubRepoRef;
-    const url = searchIssueRepoUrl(grr, `+"${body}"`);
-    logger.info(`Request to '${url}' to get issues`);
-    const returnedIssues: KnownIssue[] = await axios.get(url, github.authHeaders(token)).then(r => r.data.items);
-    return returnedIssues.filter(i =>
-        i.body.includes(body)
-        && i.url.includes(`/${rr.owner}/${rr.repo}/issues/`));
+/**
+ * Format review comment into a Markdown list item including trailing
+ * newline.
+ *
+ * @param c review comment to format
+ * @return Markdown as string with trailing newline
+ */
+export function reviewCommentToMarkdown(c: ReviewComment, grr?: GitHubRepoRef): string {
+    let loc: string = "";
+    if (c.sourceLocation && c.sourceLocation.path) {
+        const line = (c.sourceLocation.lineFrom1) ? `:${c.sourceLocation.lineFrom1}` : "";
+        loc = "`" + c.sourceLocation.path + line + "`";
+        if (grr) {
+            const url = deepLink(grr, c.sourceLocation);
+            loc = `[${loc}](${url})`;
+        }
+        loc += ": ";
+    }
+    return `- ${loc}_(${c.severity})_ ${c.detail}\n`;
 }
 
 /**
- * Compare giving open issues a lower sort order
- * @param {KnownIssue} a
- * @param {KnownIssue} b
- * @return {number}
+ * Truncate issue body if it exceeds the maximum desired size.  The
+ * maximum desired size is slightly lower than the maximum allowed by
+ * GitHub to allow the issue creator to add tag markers to the issue
+ * without exceeding the GitHub limit.
+ *
+ * @param body original message
+ * @return body, truncated if necessary
  */
-function openFirst(a: KnownIssue, b: KnownIssue): number {
-    if (a.state === "open" && b.state === "closed") {
-        return -1;
+export function truncateBodyIfTooLarge(body: string): string {
+    const bodySizeLimit = 65536 - 1000; // allow for user to add tags
+    if (body.length < bodySizeLimit) {
+        return body;
     }
-    if (b.state === "open" && a.state === "closed") {
-        return 1;
-    }
-    return b.number - a.number; // if same state, most recent one first.
+    return body.substring(0, bodySizeLimit).replace(/\n.*$/, "\n_Issue body truncated…_\n");
 }
 
 export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) => {
     const grr = rr as GitHubRepoRef;
     let body = "";
 
-    const uniqueCategories = _.uniq(comments.map(c => c.category)).sort();
+    const uniqueCategories = _.uniq(comments.map(c => c.category)).sort((a, b) => a.localeCompare(b));
     uniqueCategories.forEach(category => {
-        body += `## ${category}\n`;
-        body += comments
-            .filter(c => c.category === category)
-            .map(c =>
-                `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
-                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
+        body += `## ${category}\n\n`;
+        body += SubCategorySortingBodyFormatter(comments.filter(c => c.category === category), grr);
     });
     return body;
 };
@@ -352,14 +303,14 @@ export const SubCategorySortingBodyFormatter: CommentsFormatter = (comments, rr)
     const grr = rr as GitHubRepoRef;
     let body = "";
 
-    const uniqueCategories = _.uniq(comments.map(c => c.subcategory || "n/a")).sort();
-    uniqueCategories.forEach(category => {
-        body += `## ${category}\n`;
+    const uniqueCategories = _.uniq(comments.map(c => c.subcategory || "n/a")).sort((a, b) => a.localeCompare(b));
+    uniqueCategories.forEach(subcategory => {
+        body += `### ${subcategory}\n\n`;
         body += comments
-            .filter(c => c.subcategory === category)
-            .map(c =>
-                `- \`${c.sourceLocation.path || ""}${c.sourceLocation.lineFrom1 ? `:${c.sourceLocation.lineFrom1}` : ""
-                }\`: [${c.detail}](${deepLink(grr, c.sourceLocation)})\n`).join("\n");
+            .filter(c => c.subcategory === subcategory)
+            .sort(reviewCommentSorter)
+            .map(c => reviewCommentToMarkdown(c, grr))
+            .join("") + "\n";
     });
     return body;
 };
