@@ -26,14 +26,14 @@ import {
 import {
     createSoftwareDeliveryMachine,
 } from "@atomist/sdm-core";
-import { IssueSupport } from "@atomist/sdm-pack-issue";
+import { issueSupport } from "@atomist/sdm-pack-issue";
 
 export function machine(configuration: SoftwareDeliveryMachineConfiguration): SoftwareDeliveryMachine {
     const sdm = createSoftwareDeliveryMachine({
         name: "My Software Delivery Machine",
         configuration,
     });
-    sdm.addExtensionPacks(IssueSupport);
+    sdm.addExtensionPacks(issueSupport());
     return sdm;
 };
 ```

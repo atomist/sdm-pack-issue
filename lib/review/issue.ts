@@ -25,7 +25,6 @@ import {
 import { github } from "@atomist/sdm-core";
 import axios from "axios";
 import * as stringify from "json-stringify-safe";
-import * as _ from "lodash";
 
 export interface KnownIssue extends Issue {
     state: "open" | "closed";
@@ -65,6 +64,27 @@ export async function createIssue(credentials: ProjectOperationCredentials, rr: 
     logger.info(`Request to '${url}' to create issue`);
     try {
         const resp = await axios.post(url, issue, github.authHeaders(token));
+        return resp.data;
+    } catch (e) {
+        e.message = `Failed to create issue: ${e.message}: ${stringify(e.response.data)}`;
+        logger.error(e.message);
+        throw e;
+    }
+}
+
+/**
+ * Create a GitHub issue comment and return the API response.
+ */
+export async function createComment(credentials: ProjectOperationCredentials,
+                                    rr: RemoteRepoRef,
+                                    issue: KnownIssue,
+                                    comment: string): Promise<any> {
+    const token = (credentials as TokenCredentials).token;
+    const grr = rr as GitHubRepoRef;
+    const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues/${issue.number}/comments`;
+    logger.info(`Request to '${url}' to create issue comment`);
+    try {
+        const resp = await axios.post(url, { body: comment }, github.authHeaders(token));
         return resp.data;
     } catch (e) {
         e.message = `Failed to create issue: ${e.message}: ${stringify(e.response.data)}`;
