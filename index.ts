@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-export { IssueSupport } from "./lib/issue";
+export {
+    IssueSupport,
+    IssueSupportOptions,
+    issueSupport,
+} from "./lib/issue";
 export {
     singleIssueManagingReviewListener,
     multiIssueManagingReviewListener,
