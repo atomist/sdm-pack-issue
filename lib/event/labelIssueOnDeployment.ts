@@ -40,7 +40,7 @@ import * as schema from "../typings/types";
  * Handle issue labeling based on the Deployment events
  * @param sdm
  */
-function labelIssueOnDeployment(sdm: SoftwareDeliveryMachine):
+function labelIssuesOnDeploymentListener(sdm: SoftwareDeliveryMachine):
     OnEvent<schema.LabelIssuesOnDeployment.Subscription, CredentialsResolver> {
     return async (e: EventFired<schema.LabelIssuesOnDeployment.Subscription>,
                   ctx: HandlerContext,
@@ -227,7 +227,7 @@ export function labelIssuesOnDeployment(sdm: SoftwareDeliveryMachine):
         description: "Label issues with environment when deployments are recorded",
         tags: ["github", "issue", "deployment"],
         subscription: GraphQL.subscription("LabelIssuesOnDeployment"),
-        listener: labelIssueOnDeployment(sdm),
+        listener: labelIssuesOnDeploymentListener(sdm),
         paramsMaker: () => sdm.configuration.sdm.credentialsResolver,
     };
 }

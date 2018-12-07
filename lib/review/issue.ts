@@ -25,7 +25,6 @@ import {
 import { github } from "@atomist/sdm-core";
 import axios from "axios";
 import * as stringify from "json-stringify-safe";
-import * as _ from "lodash";
 
 export interface KnownIssue extends Issue {
     state: "open" | "closed";
@@ -73,6 +72,27 @@ export async function createIssue(credentials: ProjectOperationCredentials, rr: 
     }
 }
 
+/**
+ * Create a GitHub issue comment and return the API response.
+ */
+export async function createComment(credentials: ProjectOperationCredentials,
+                                    rr: RemoteRepoRef,
+                                    issue: KnownIssue,
+                                    comment: string): Promise<any> {
+    const token = (credentials as TokenCredentials).token;
+    const grr = rr as GitHubRepoRef;
+    const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues/${issue.number}/comments`;
+    logger.info(`Request to '${url}' to create issue comment`);
+    try {
+        const resp = await axios.post(url, { body: comment }, github.authHeaders(token));
+        return resp.data;
+    } catch (e) {
+        e.message = `Failed to create issue: ${e.message}: ${stringify(e.response.data)}`;
+        logger.error(e.message);
+        throw e;
+    }
+}
+
 function searchIssueRepoUrl(rr: GitHubRepoRef, tail?: string): string {
     const raw = `${rr.scheme}${rr.apiBase}/search/issues?q=is:issue+repo:${rr.owner}/${rr.repo}` +
         (tail ? tail : "");
@@ -82,7 +102,12 @@ function searchIssueRepoUrl(rr: GitHubRepoRef, tail?: string): string {
 /**
  * Find the most recent open (or closed, if none are open) issue with precisely this title
  */
-export async function findIssue(credentials: ProjectOperationCredentials, rr: RemoteRepoRef, title: string): Promise<KnownIssue> {
+export async function findIssue(credentials: ProjectOperationCredentials,
+                                rr: RemoteRepoRef,
+                                title: string,
+                                filter?: (i: KnownIssue) => boolean): Promise<KnownIssue> {
+    const filterToUse = filter ? filter :
+        (i: KnownIssue) => i.title === title && i.url.includes(`/${rr.owner}/${rr.repo}/issues/`);
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
     const url = searchIssueRepoUrl(grr, `+"${title}"`);
@@ -90,7 +115,7 @@ export async function findIssue(credentials: ProjectOperationCredentials, rr: Re
     try {
         const resp = await axios.get(url, github.authHeaders(token));
         const returnedIssues: KnownIssue[] = resp.data.items;
-        const filteredIssues = returnedIssues.filter(i => i.title === title && i.url.includes(`/${rr.owner}/${rr.repo}/issues/`));
+        const filteredIssues = returnedIssues.filter(filterToUse);
         if (filteredIssues.length < 1) {
             return undefined;
         }

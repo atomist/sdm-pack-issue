@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
+import { toStringArray } from "@atomist/automation-client";
 import {
     ExtensionPack,
     metadata,
 } from "@atomist/sdm";
-import { labelIssuesOnDeployment } from "./event/LabelIssueOnDeployment";
+import { closeCodeInspectionIssues } from "./event/closeCodeInspectionIssues";
+import { labelIssuesOnDeployment } from "./event/labelIssueOnDeployment";
 
+/**
+ * @deprecated Use issueSupport(options: IssueSupportOptions) instead
+ */
 export const IssueSupport: ExtensionPack = {
     ...metadata(),
     configure: sdm => {
@@ -27,3 +32,56 @@ export const IssueSupport: ExtensionPack = {
         return sdm;
     },
 };
+
+/**
+ * Options to configure the issue
+ */
+export interface IssueSupportOptions {
+
+    /**
+     * Label issues with environment names when deployment events occur
+     */
+    labelIssuesOnDeployment?: boolean;
+
+    /**
+     * Close issue created by the review listener
+     */
+    closeCodeInspectionIssuesOnBranchDeletion?: {
+        enabled: boolean;
+        source: string | string[];
+    };
+}
+
+const DefaultIssueSupportOptions: IssueSupportOptions = {
+    labelIssuesOnDeployment: true,
+    closeCodeInspectionIssuesOnBranchDeletion: {
+        enabled: false,
+        source: [],
+    },
+};
+
+/**
+ * Configure the issue extension pack
+ * @param options
+ */
+export function issueSupport(options: IssueSupportOptions = {}): ExtensionPack {
+    return {
+        ...metadata(),
+        configure: sdm => {
+
+            const optsToUse: IssueSupportOptions = {
+                ...DefaultIssueSupportOptions,
+                ...options,
+            };
+
+            if (optsToUse.labelIssuesOnDeployment) {
+                sdm.addEvent(labelIssuesOnDeployment(sdm));
+            }
+            if (optsToUse.closeCodeInspectionIssuesOnBranchDeletion &&
+                optsToUse.closeCodeInspectionIssuesOnBranchDeletion.enabled) {
+                sdm.addEvent(closeCodeInspectionIssues(sdm,
+                    ...toStringArray(optsToUse.closeCodeInspectionIssuesOnBranchDeletion.source)));
+            }
+        },
+    };
+}

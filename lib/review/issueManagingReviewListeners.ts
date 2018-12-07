@@ -170,7 +170,7 @@ export function singleIssuePerCategoryManagingReviewListener(
     return async (ri: ReviewListenerInvocation) => {
 
         const relevantCategories = _.groupBy(ri.review.comments.filter(commentFilter), "category");
-        const tag = createTag(source, ri.push);
+        const tag = createTag(source, ri.push.branch);
         let knownIssues = await findIssues(ri.credentials, ri.id as GitHubRepoRef, tag);
 
         for (const category in relevantCategories) {
@@ -233,8 +233,8 @@ export function singleIssuePerCategoryManagingReviewListener(
     };
 }
 
-function createTag(tag: string, push: OnPushToAnyBranch.Push): string {
-    return `[atomist:code-inspection:${push.branch.toLowerCase()}=${tag.toLowerCase()}]`;
+export function createTag(tag: string, branch: string): string {
+    return `[atomist:code-inspection:${branch.toLowerCase()}=${tag.toLowerCase()}]`;
 }
 
 function who(push: OnPushToAnyBranch.Push): string {
