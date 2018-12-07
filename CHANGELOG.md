@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist/sdm-pack-seed/compare/1.0.2...HEAD)
 
+### Added
+
+-   Close issues when branch gets deleted. [#13](https://github.com/atomist/sdm-pack-issue/issues/13)
+
 ### Fixed
 
 -   Improve managing of GitHub issues. [#8](https://github.com/atomist/sdm-pack-issue/issues/8)
