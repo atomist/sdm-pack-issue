@@ -31,6 +31,7 @@ import {
 } from "@atomist/sdm";
 import * as _ from "lodash";
 import {
+    createComment,
     createIssue,
     findIssue,
     findIssues,
@@ -219,13 +220,13 @@ export function singleIssuePerCategoryManagingReviewListener(
         // Close the remaining issues
         if (knownIssues.length > 0) {
             const body =
-                `The last code inspection problem was fixed by @${who(ri.push)} when they pushed ${linkToSha(ri.id)}`;
+                `Issue closed because last code inspection problem was fixed by @${who(ri.push)} when they pushed ${linkToSha(ri.id)}.`;
             for (const existingIssue of knownIssues) {
+                await createComment(ri.credentials, ri.id, existingIssue, body);
                 await updateIssue(ri.credentials, ri.id,
                     {
                         ...existingIssue,
                         state: "closed",
-                        body,
                     });
             }
         }

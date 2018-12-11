@@ -54,7 +54,7 @@ function closeCodeInspectionIssuesListener(sdm: SoftwareDeliveryMachine,
             const issue = await findIssue(credentials, id, tag, i => i.body.includes(tag));
             if (issue && issue.state === "open") {
                 issue.state = "closed";
-                await createComment(credentials, id, issue, `Issue closed because branch ${codeLine(branch)} was deleted`);
+                await createComment(credentials, id, issue, `Issue closed because branch ${codeLine(branch)} was deleted.`);
                 await updateIssue(credentials, id, issue);
             }
         }
