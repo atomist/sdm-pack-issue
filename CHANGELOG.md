@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Close issue with new comment, not body rewrite. [#11](https://github.com/atomist/sdm-pack-issue/issues/11)
 
+### Fixed
+
+-   Issue listener sometimes fails due to reading property on undefined. [#20](https://github.com/atomist/sdm-pack-issue/issues/20)
+
 ## [1.1.0](https://github.com/atomist/sdm-pack-seed/compare/1.0.2...1.1.0) - 2018-12-10
 
 ### Added
