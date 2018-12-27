@@ -24,7 +24,6 @@ import {
 } from "@atomist/automation-client";
 import { github } from "@atomist/sdm-core";
 import axios from "axios";
-import * as stringify from "json-stringify-safe";
 
 export interface KnownIssue extends Issue {
     state: "open" | "closed";
@@ -48,7 +47,7 @@ export async function updateIssue(credentials: ProjectOperationCredentials, rr: 
         const resp = await axios.patch(url, safeIssue, github.authHeaders(token));
         return resp.data;
     } catch (e) {
-        e.message = `Failed to update issue ${issue.number}: ${e.message}: ${stringify(e.response.data)}`;
+        e.message = `Failed to update issue ${issue.number}: ${e.message}`;
         logger.error(e.message);
         throw e;
     }
@@ -66,7 +65,7 @@ export async function createIssue(credentials: ProjectOperationCredentials, rr: 
         const resp = await axios.post(url, issue, github.authHeaders(token));
         return resp.data;
     } catch (e) {
-        e.message = `Failed to create issue: ${e.message}: ${stringify(e.response.data)}`;
+        e.message = `Failed to create issue: ${e.message}`;
         logger.error(e.message);
         throw e;
     }
@@ -87,7 +86,7 @@ export async function createComment(credentials: ProjectOperationCredentials,
         const resp = await axios.post(url, { body: comment }, github.authHeaders(token));
         return resp.data;
     } catch (e) {
-        e.message = `Failed to create issue: ${e.message}: ${stringify(e.response.data)}`;
+        e.message = `Failed to create issue: ${e.message}`;
         logger.error(e.message);
         throw e;
     }
@@ -121,7 +120,7 @@ export async function findIssue(credentials: ProjectOperationCredentials,
         }
         return filteredIssues.sort(openFirst)[0];
     } catch (e) {
-        e.message = `Failed to find issue: ${e.message}: ${stringify(e.response.data)}`;
+        e.message = `Failed to find issue: ${e.message}`;
         logger.error(e.message);
         throw e;
     }
@@ -141,7 +140,7 @@ export async function findIssues(credentials: ProjectOperationCredentials, rr: R
         const returnedIssues: KnownIssue[] = resp.data.items;
         return returnedIssues.filter(i => i.body.includes(body) && i.url.includes(`/${rr.owner}/${rr.repo}/issues/`));
     } catch (e) {
-        e.message = `Failed to find issues: ${e.message}: ${stringify(e.response.data)}`;
+        e.message = `Failed to find issues: ${e.message}`;
         logger.error(e.message);
         throw e;
     }
