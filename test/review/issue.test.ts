@@ -42,7 +42,7 @@ describe("issue", () => {
         }
     });
 
-    it("should create, update, find, and close an issue", async () => {
+    it.skip("should create, update, find, and close an issue", async () => {
         function randomInt(): number {
             return Math.floor(Math.random() * 1000000000);
         }
