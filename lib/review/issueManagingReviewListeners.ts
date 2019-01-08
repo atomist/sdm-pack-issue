@@ -192,7 +192,7 @@ export function singleIssuePerCategoryManagingReviewListener(
                     const issue: Issue = {
                         title,
                         body: `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`,
-                        assignees: _.uniq(ri.push.commits.map(c => c.author.login)),
+                        assignees: assignIssue ? _.uniq(ri.push.commits.map(c => c.author.login)) : undefined,
                         labels,
                     };
                     logger.info("Creating issue %j from review comment", issue);
@@ -207,7 +207,7 @@ export function singleIssuePerCategoryManagingReviewListener(
                                 ...existingIssue,
                                 state: "open",
                                 body,
-                                assignees: _.uniq(ri.push.commits.map(c => c.author.login)),
+                                assignees: assignIssue ? _.uniq(ri.push.commits.map(c => c.author.login)) : undefined,
                                 labels,
                             });
                     } else {
