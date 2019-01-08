@@ -37,6 +37,7 @@ import {
     findIssues,
     updateIssue,
 } from "./issue";
+import { raiseIssueLinkEvent } from "./linkIssue";
 
 export type BranchFilter = (push: OnPushToAnyBranch.Push) => boolean;
 
@@ -196,7 +197,8 @@ export function singleIssuePerCategoryManagingReviewListener(
                         labels,
                     };
                     logger.info("Creating issue %j from review comment", issue);
-                    await createIssue(ri.credentials, ri.id, issue);
+                    const newIssue = await createIssue(ri.credentials, ri.id, issue);
+                    await raiseIssueLinkEvent(newIssue, ri);
                 } else {
                     // Update the issue if necessary, reopening it if need be
                     const body = `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`;
@@ -210,6 +212,7 @@ export function singleIssuePerCategoryManagingReviewListener(
                                 assignees: assignIssue ? _.uniq(ri.push.commits.map(c => c.author.login)) : undefined,
                                 labels,
                             });
+                        await raiseIssueLinkEvent(existingIssue, ri);
                     } else {
                         logger.info("Not updating issue %d as body has not changed", existingIssue.number);
                     }
@@ -228,6 +231,7 @@ export function singleIssuePerCategoryManagingReviewListener(
                         ...existingIssue,
                         state: "closed",
                     });
+                await raiseIssueLinkEvent(existingIssue, ri);
             }
         }
 
