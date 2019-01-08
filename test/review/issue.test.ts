@@ -63,7 +63,7 @@ describe("issue", () => {
         assert(u.title === title);
         assert(u.body === body);
         assert(u.state === "open");
-        await sleep(1000);
+        await sleep(5000);
         const f = await findIssue(creds, rr, title);
         assert(f);
         assert(f.title === title);
