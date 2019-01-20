@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Issue listener sometimes fails due to reading property on undefined. [#20](https://github.com/atomist/sdm-pack-issue/issues/20)
 -   SingleIssuePerCategoryManagingReviewListener always assigns, regardless of assignIssue parameter. [#22](https://github.com/atomist/sdm-pack-issue/issues/22)
+-   Review listener keeps adding comments to closed review issue. [#23](https://github.com/atomist/sdm-pack-issue/issues/23)
 
 ## [1.1.0](https://github.com/atomist/sdm-pack-seed/compare/1.0.2...1.1.0) - 2018-12-10
 
