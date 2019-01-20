@@ -225,13 +225,15 @@ export function singleIssuePerCategoryManagingReviewListener(
             const body =
                 `Issue closed because last code inspection problem was fixed by @${who(ri.push)} when they pushed ${linkToSha(ri.id)}.`;
             for (const existingIssue of knownIssues) {
-                await createComment(ri.credentials, ri.id, existingIssue, body);
-                await updateIssue(ri.credentials, ri.id,
-                    {
-                        ...existingIssue,
-                        state: "closed",
-                    });
-                await raiseIssueLinkEvent(existingIssue, ri);
+                if (existingIssue.state === "open") {
+                    await createComment(ri.credentials, ri.id, existingIssue, body);
+                    await updateIssue(ri.credentials, ri.id,
+                        {
+                            ...existingIssue,
+                            state: "closed",
+                        });
+                    await raiseIssueLinkEvent(existingIssue, ri);
+                }
             }
         }
 
