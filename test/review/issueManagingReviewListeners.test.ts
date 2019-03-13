@@ -15,6 +15,7 @@
  */
 
 /* tslint:disable:max-file-line-count */
+/* tslint:disable:max-line-length */
 
 import {
     GitHubRepoRef,
@@ -65,9 +66,9 @@ describe("issueManagingReviewListeners", () => {
                     lineFrom1: 1962,
                 },
             } as any;
-            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers" });
+            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers", sha: "73179012fe41cb3bc09681a9fd9449ca09bcba53" });
             const m = reviewCommentToMarkdown(c, grr);
-            const e = "- [`ant-man.ts:1962`](https://github.com/marvel/avengers/blob/HEAD/ant-man.ts#L1962): _(error)_ Stan Lee\n";
+            const e = "- [`ant-man.ts:1962`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/ant-man.ts#L1962): _(error)_ Stan Lee\n";
             assert(m === e);
         });
 
@@ -79,9 +80,9 @@ describe("issueManagingReviewListeners", () => {
                     path: "ant-man.ts",
                 },
             } as any;
-            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers" });
+            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers", sha: "73179012fe41cb3bc09681a9fd9449ca09bcba53"});
             const m = reviewCommentToMarkdown(c, grr);
-            const e = "- [`ant-man.ts`](https://github.com/marvel/avengers/blob/HEAD/ant-man.ts): _(info)_ Stan Lee\n";
+            const e = "- [`ant-man.ts`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/ant-man.ts): _(info)_ Stan Lee\n";
             assert(m === e);
         });
 
@@ -91,7 +92,7 @@ describe("issueManagingReviewListeners", () => {
 
         it("should format nothing", () => {
             const comments: ReviewComment[] = [];
-            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers" });
+            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers", sha: "73179012fe41cb3bc09681a9fd9449ca09bcba53" });
             const b = SubCategorySortingBodyFormatter(comments, grr);
             assert(b === "");
         });
@@ -176,55 +177,55 @@ describe("issueManagingReviewListeners", () => {
                     },
                 },
             ];
-            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers" });
+            const grr = GitHubRepoRef.from({ owner: "marvel", repo: "avengers", sha: "73179012fe41cb3bc09681a9fd9449ca09bcba53" });
             const cb = CategorySortingBodyFormatter(comments, grr);
             const ce = `## hero
 
 ### avenger
 
-- [\`scarlet-witch.ts:444\`](https://github.com/marvel/avengers/blob/HEAD/scarlet-witch.ts#L444): _(error)_ Stan Lee
-- [\`ant-man.ts:43\`](https://github.com/marvel/avengers/blob/HEAD/ant-man.ts#L43): _(warn)_ Stan Lee
-- [\`ant-man.ts:123\`](https://github.com/marvel/avengers/blob/HEAD/ant-man.ts#L123): _(warn)_ Stan Lee
+- [\`scarlet-witch.ts:444\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/scarlet-witch.ts#L444): _(error)_ Stan Lee
+- [\`ant-man.ts:43\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/ant-man.ts#L43): _(warn)_ Stan Lee
+- [\`ant-man.ts:123\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/ant-man.ts#L123): _(warn)_ Stan Lee
 
 ### independent
 
-- [\`spider-man.ts:143\`](https://github.com/marvel/avengers/blob/HEAD/spider-man.ts#L143): _(warn)_ Steve Ditko
+- [\`spider-man.ts:143\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/spider-man.ts#L143): _(warn)_ Steve Ditko
 
 ### x-men
 
-- [\`colossus.ts:123\`](https://github.com/marvel/avengers/blob/HEAD/colossus.ts#L123): _(warn)_ Jack Kirby
+- [\`colossus.ts:123\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/colossus.ts#L123): _(warn)_ Jack Kirby
 
 ## villian
 
 ### masters-of-evil
 
-- [\`baron-zemo.ts:45\`](https://github.com/marvel/avengers/blob/HEAD/baron-zemo.ts#L45): _(error)_ Jack Kirby
+- [\`baron-zemo.ts:45\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/baron-zemo.ts#L45): _(error)_ Jack Kirby
 
 ### x-men
 
-- [\`sabretooth.ts:13\`](https://github.com/marvel/avengers/blob/HEAD/sabretooth.ts#L13): _(error)_ Jack Kirby
+- [\`sabretooth.ts:13\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/sabretooth.ts#L13): _(error)_ Jack Kirby
 
 `;
             assert(cb === ce);
             const sb = SubCategorySortingBodyFormatter(comments, grr);
             const se = `### avenger
 
-- [\`scarlet-witch.ts:444\`](https://github.com/marvel/avengers/blob/HEAD/scarlet-witch.ts#L444): _(error)_ Stan Lee
-- [\`ant-man.ts:43\`](https://github.com/marvel/avengers/blob/HEAD/ant-man.ts#L43): _(warn)_ Stan Lee
-- [\`ant-man.ts:123\`](https://github.com/marvel/avengers/blob/HEAD/ant-man.ts#L123): _(warn)_ Stan Lee
+- [\`scarlet-witch.ts:444\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/scarlet-witch.ts#L444): _(error)_ Stan Lee
+- [\`ant-man.ts:43\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/ant-man.ts#L43): _(warn)_ Stan Lee
+- [\`ant-man.ts:123\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/ant-man.ts#L123): _(warn)_ Stan Lee
 
 ### independent
 
-- [\`spider-man.ts:143\`](https://github.com/marvel/avengers/blob/HEAD/spider-man.ts#L143): _(warn)_ Steve Ditko
+- [\`spider-man.ts:143\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/spider-man.ts#L143): _(warn)_ Steve Ditko
 
 ### masters-of-evil
 
-- [\`baron-zemo.ts:45\`](https://github.com/marvel/avengers/blob/HEAD/baron-zemo.ts#L45): _(error)_ Jack Kirby
+- [\`baron-zemo.ts:45\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/baron-zemo.ts#L45): _(error)_ Jack Kirby
 
 ### x-men
 
-- [\`sabretooth.ts:13\`](https://github.com/marvel/avengers/blob/HEAD/sabretooth.ts#L13): _(error)_ Jack Kirby
-- [\`colossus.ts:123\`](https://github.com/marvel/avengers/blob/HEAD/colossus.ts#L123): _(warn)_ Jack Kirby
+- [\`sabretooth.ts:13\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/sabretooth.ts#L13): _(error)_ Jack Kirby
+- [\`colossus.ts:123\`](https://github.com/marvel/avengers/blob/73179012fe41cb3bc09681a9fd9449ca09bcba53/colossus.ts#L123): _(warn)_ Jack Kirby
 
 `;
             assert(sb === se);
