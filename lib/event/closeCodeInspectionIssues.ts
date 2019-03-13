@@ -25,6 +25,7 @@ import {
     CredentialsResolver,
     EventHandlerRegistration,
     SoftwareDeliveryMachine,
+    resolveCredentialsPromise,
 } from "@atomist/sdm";
 import { codeLine } from "@atomist/slack-messages";
 import * as _ from "lodash";
@@ -47,8 +48,8 @@ function closeCodeInspectionIssuesListener(sdm: SoftwareDeliveryMachine,
             rawApiBase: repo.org.provider.apiUrl,
         });
         const credentialsResolver = _.merge(sdm.configuration.sdm.credentialsResolver, params);
-        const credentials: TokenCredentials =
-            (credentialsResolver.eventHandlerCredentials(ctx, id) as TokenCredentials);
+        const credentials: TokenCredentials = await resolveCredentialsPromise(
+            credentialsResolver.eventHandlerCredentials(ctx, id)) as TokenCredentials;
         for (const source of sources) {
             const tag = createTag(source, branch);
             const issue = await findIssue(credentials, id, tag, i => i.body.includes(tag));

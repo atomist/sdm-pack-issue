@@ -30,6 +30,7 @@ import {
     CredentialsResolver,
     EventHandlerRegistration,
     SoftwareDeliveryMachine,
+    resolveCredentialsPromise,
 } from "@atomist/sdm";
 import { updateIssue } from "@atomist/sdm-core/lib/util/github/ghub";
 import * as _ from "lodash";
@@ -131,8 +132,8 @@ function labelIssuesOnDeploymentListener(sdm: SoftwareDeliveryMachine):
             });
 
             const credentialsResolver = _.merge(sdm.configuration.sdm.credentialsResolver, params);
-            const credentials: TokenCredentials =
-                (credentialsResolver.eventHandlerCredentials(ctx, id) as TokenCredentials);
+            const credentials: TokenCredentials =  await resolveCredentialsPromise(
+                credentialsResolver.eventHandlerCredentials(ctx, id)) as TokenCredentials;
             const api = github.api(credentials.token);
             const label = `env:${deployment.environment}`;
             await github.createLabel(deployment.commit.owner, deployment.commit.repo, label, api);
