@@ -23,6 +23,7 @@ import {
     TokenCredentials,
 } from "@atomist/automation-client";
 import { github } from "@atomist/sdm-core";
+// tslint:disable-next-line:import-blacklist
 import axios from "axios";
 
 export interface KnownIssue extends Issue {

@@ -20,6 +20,7 @@ import {
     TokenCredentials,
 } from "@atomist/automation-client";
 import { github } from "@atomist/sdm-core";
+// tslint:disable-next-line:import-blacklist
 import axios from "axios";
 import * as assert from "power-assert";
 import {
