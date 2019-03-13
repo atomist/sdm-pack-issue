@@ -29,8 +29,8 @@ import {
 import {
     CredentialsResolver,
     EventHandlerRegistration,
-    SoftwareDeliveryMachine,
     resolveCredentialsPromise,
+    SoftwareDeliveryMachine,
 } from "@atomist/sdm";
 import { updateIssue } from "@atomist/sdm-core/lib/util/github/ghub";
 import * as _ from "lodash";

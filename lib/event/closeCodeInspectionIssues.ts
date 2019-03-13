@@ -24,8 +24,8 @@ import {
 import {
     CredentialsResolver,
     EventHandlerRegistration,
-    SoftwareDeliveryMachine,
     resolveCredentialsPromise,
+    SoftwareDeliveryMachine,
 } from "@atomist/sdm";
 import { codeLine } from "@atomist/slack-messages";
 import * as _ from "lodash";
