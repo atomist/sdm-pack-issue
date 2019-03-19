@@ -31,7 +31,7 @@ import { codeLine } from "@atomist/slack-messages";
 import * as _ from "lodash";
 import {
     createComment,
-    findIssue,
+    findIssues,
     updateIssue,
 } from "../review/issue";
 import { createTag } from "../review/issueManagingReviewListeners";
@@ -52,11 +52,13 @@ function closeCodeInspectionIssuesListener(sdm: SoftwareDeliveryMachine,
             credentialsResolver.eventHandlerCredentials(ctx, id)) as TokenCredentials;
         for (const source of sources) {
             const tag = createTag(source, branch);
-            const issue = await findIssue(credentials, id, tag, i => i.body.includes(tag));
-            if (issue && issue.state === "open") {
-                issue.state = "closed";
-                await createComment(credentials, id, issue, `Issue closed because branch ${codeLine(branch)} was deleted.`);
-                await updateIssue(credentials, id, issue);
+            const issues = await findIssues(credentials, id, tag);
+            for (const issue of issues) {
+                if (issue && issue.state === "open") {
+                    issue.state = "closed";
+                    await createComment(credentials, id, issue, `Issue closed because branch ${codeLine(branch)} was deleted.`);
+                    await updateIssue(credentials, id, issue);
+                }
             }
         }
         return Success;
