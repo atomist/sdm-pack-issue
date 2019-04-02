@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 -   Raise issue commit link event for managed issues. [cc752d9](https://github.com/atomist/sdm-pack-issue/commit/cc752d937364646c803fc6de8fa32f1bf54170b4)
+-   Add code inspection label to Code Inspection Issues. [#25](https://github.com/atomist/sdm-pack-issue/issues/25)
 
 ### Changed
 
