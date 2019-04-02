@@ -36,16 +36,16 @@ export interface KnownIssue extends Issue {
  * Update the state and body of an issue.
  */
 export async function updateIssue(credentials: ProjectOperationCredentials, rr: RemoteRepoRef, issue: KnownIssue): Promise<KnownIssue> {
-    const safeIssue = {
+    const safeIssue: Issue = {
         state: issue.state,
         body: issue.body,
-    };
+    } as any;
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
     const url = encodeURI(`${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues/${issue.number}`);
     logger.info(`Request to '${url}' to update issue`);
     try {
-        const resp = await axios.patch(url, safeIssue, github.authHeaders(token));
+        const resp = await axios.patch(url, addCodeInspectionLabel(safeIssue), github.authHeaders(token));
         return resp.data;
     } catch (e) {
         e.message = `Failed to update issue ${issue.number}: ${e.message}`;
@@ -63,7 +63,7 @@ export async function createIssue(credentials: ProjectOperationCredentials, rr: 
     const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues`;
     logger.info(`Request to '${url}' to create issue`);
     try {
-        const resp = await axios.post(url, issue, github.authHeaders(token));
+        const resp = await axios.post(url, addCodeInspectionLabel(issue), github.authHeaders(token));
         return resp.data;
     } catch (e) {
         e.message = `Failed to create issue: ${e.message}`;
@@ -165,4 +165,21 @@ function openFirst(a: KnownIssue, b: KnownIssue): number {
         return 1;
     }
     return b.number - a.number;
+}
+
+const CodeInspectionIssueLabel = "code-inspection";
+
+/**
+ * Function to add a code-inspection label to the issue
+ * @param issue
+ */
+function addCodeInspectionLabel(issue: Issue): Issue {
+    const safeIssue: Issue = {
+        ...issue,
+        labels: issue.labels || [],
+    };
+    if (!safeIssue.labels.includes(CodeInspectionIssueLabel)) {
+        safeIssue.labels.push(CodeInspectionIssueLabel);
+    }
+    return safeIssue;
 }
