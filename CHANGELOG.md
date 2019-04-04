@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist/sdm-pack-seed/compare/1.2.0...HEAD)
 
+### Fixed
+
+-   Truncate body if too large. [3519332](https://github.com/atomist/sdm-pack-issue/commit/3519332704dc248127526c9cb223a722142669f1)
+
 ## [1.2.0](https://github.com/atomist/sdm-pack-seed/compare/1.1.0...1.2.0) - 2019-04-02
 
 ### Added
