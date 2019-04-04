@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 -   Update issue so that it opens again. [5eb6cbb](https://github.com/atomist/sdm-pack-issue/commit/5eb6cbbe62b00582e10af6818a98f8bda512a402)
--   Truncate body if too large. [3519332](https://github.com/atomist/sdm-pack-issue/commit/3519332704dc248127526c9cb223a722142669f1)
+-   Issues with too-large bodies still attempting to be created. [#27](https://github.com/atomist/sdm-pack-issue/issues/27)
 
 ## [1.2.0](https://github.com/atomist/sdm-pack-seed/compare/1.1.0...1.2.0) - 2019-04-02
 
