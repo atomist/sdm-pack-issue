@@ -203,19 +203,15 @@ export function singleIssuePerCategoryManagingReviewListener(
                     // Update the issue if necessary, reopening it if need be
                     const body = `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`;
                     await raiseIssueLinkEvent(existingIssue, ri);
-                    if (body !== existingIssue.body) {
-                        logger.info("Updating issue %d with the latest ", existingIssue.number);
-                        await updateIssue(ri.credentials, ri.id,
-                            {
-                                ...existingIssue,
-                                state: "open",
-                                body,
-                                assignees: assignIssue ? _.uniq(ri.push.commits.map(c => c.author.login)) : undefined,
-                                labels,
-                            });
-                    } else {
-                        logger.info("Not updating issue %d as body has not changed", existingIssue.number);
-                    }
+                    logger.info("Updating issue %d with the latest ", existingIssue.number);
+                    await updateIssue(ri.credentials, ri.id,
+                        {
+                            ...existingIssue,
+                            state: "open",
+                            body,
+                            assignees: assignIssue ? _.uniq(ri.push.commits.map(c => c.author.login)) : undefined,
+                            labels,
+                        });
                 }
             }
         }
