@@ -273,23 +273,6 @@ export function reviewCommentToMarkdown(c: ReviewComment, grr?: GitHubRepoRef): 
     return `- ${loc}_(${c.severity})_ ${c.detail}\n`;
 }
 
-/**
- * Truncate issue body if it exceeds the maximum desired size.  The
- * maximum desired size is slightly lower than the maximum allowed by
- * GitHub to allow the issue creator to add tag markers to the issue
- * without exceeding the GitHub limit.
- *
- * @param body original message
- * @return body, truncated if necessary
- */
-export function truncateBodyIfTooLarge(body: string): string {
-    const bodySizeLimit = 65536 - 1000; // allow for user to add tags
-    if (body.length < bodySizeLimit) {
-        return body;
-    }
-    return body.substring(0, bodySizeLimit).replace(/\n.*$/, "\n_Issue body truncated…_\n");
-}
-
 export const CategorySortingBodyFormatter: CommentsFormatter = (comments, rr) => {
     const grr = rr as GitHubRepoRef;
     let body = "";

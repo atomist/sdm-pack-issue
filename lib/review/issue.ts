@@ -38,7 +38,7 @@ export interface KnownIssue extends Issue {
 export async function updateIssue(credentials: ProjectOperationCredentials, rr: RemoteRepoRef, issue: KnownIssue): Promise<KnownIssue> {
     const safeIssue: Issue = {
         state: issue.state,
-        body: issue.body,
+        body: truncateBodyIfTooLarge(issue.body),
     } as any;
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
@@ -58,6 +58,7 @@ export async function updateIssue(credentials: ProjectOperationCredentials, rr: 
  * Create a GitHub issue and return the API response.
  */
 export async function createIssue(credentials: ProjectOperationCredentials, rr: RemoteRepoRef, issue: Issue): Promise<KnownIssue> {
+    issue.body = truncateBodyIfTooLarge(issue.body);
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
     const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues`;
@@ -84,7 +85,7 @@ export async function createComment(credentials: ProjectOperationCredentials,
     const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues/${issue.number}/comments`;
     logger.info(`Request to '${url}' to create issue comment`);
     try {
-        const resp = await axios.post(url, { body: comment }, github.authHeaders(token));
+        const resp = await axios.post(url, { body: truncateBodyIfTooLarge(comment) }, github.authHeaders(token));
         return resp.data;
     } catch (e) {
         e.message = `Failed to create issue: ${e.message}`;
@@ -182,4 +183,21 @@ function addCodeInspectionLabel(issue: Issue): Issue {
         safeIssue.labels.push(CodeInspectionIssueLabel);
     }
     return safeIssue;
+}
+
+/**
+ * Truncate issue body if it exceeds the maximum desired size.  The
+ * maximum desired size is slightly lower than the maximum allowed by
+ * GitHub to allow the issue creator to add tag markers to the issue
+ * without exceeding the GitHub limit.
+ *
+ * @param body original message
+ * @return body, truncated if necessary
+ */
+export function truncateBodyIfTooLarge(body: string): string {
+    const bodySizeLimit = 65536 - 1000; // allow for user to add tags
+    if (body.length < bodySizeLimit) {
+        return body;
+    }
+    return body.substring(0, bodySizeLimit).replace(/\n.*$/, "\n_Body truncated…_\n");
 }
