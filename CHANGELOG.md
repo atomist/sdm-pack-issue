@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist/sdm-pack-seed/compare/1.2.1...HEAD)
 
+### Fixed
+
+-   Do not truncate issue tags. [#30](https://github.com/atomist/sdm-pack-issue/issues/30)
+
 ## [1.2.1](https://github.com/atomist/sdm-pack-seed/compare/1.2.0...1.2.1) - 2019-04-04
 
 ### Fixed
