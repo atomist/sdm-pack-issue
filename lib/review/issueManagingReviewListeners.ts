@@ -35,6 +35,7 @@ import {
     createIssue,
     findIssue,
     findIssues,
+    truncateBodyIfTooLarge,
     updateIssue,
 } from "./issue";
 import { raiseIssueLinkEvent } from "./linkIssue";
@@ -82,17 +83,17 @@ export function singleIssueManagingReviewListener(commentFilter: CommentFilter,
         }
 
         // there are some comments
+        const body = truncateBodyIfTooLarge(bodyFormatter(relevantComments, ri.id));
         if (!existingIssue) {
             const issue = {
                 title,
-                body: bodyFormatter(relevantComments, ri.id),
+                body,
                 // labels? assignees?
             };
             logger.info("Creating issue %j from review comments", issue);
             await createIssue(ri.credentials, ri.id, issue);
         } else {
             // Update the issue if necessary, reopening it if need be
-            const body = bodyFormatter(relevantComments, ri.id);
             if (body !== existingIssue.body) {
                 logger.info("Updating issue %d with the latest comments", existingIssue.number);
                 await updateIssue(ri.credentials, ri.id,
@@ -129,17 +130,17 @@ export function multiIssueManagingReviewListener(commentFilter: CommentFilter,
             const existingIssue = await findIssue(ri.credentials, ri.id as GitHubRepoRef, title);
 
             // there are some comments
+            const body = truncateBodyIfTooLarge(bodyFormatter(comment, ri.id));
             if (!existingIssue) {
                 const issue = {
                     title,
-                    body: bodyFormatter(comment, ri.id),
+                    body,
                     // labels? assignees?
                 };
                 logger.info("Creating issue %j from review comment", issue);
                 await createIssue(ri.credentials, ri.id, issue);
             } else {
                 // Update the issue if necessary, reopening it if need be
-                const body = bodyFormatter(comment, ri.id);
                 if (body !== existingIssue.body) {
                     logger.info("Updating issue %d with the latest ", existingIssue.number);
                     await updateIssue(ri.credentials, ri.id,
@@ -189,10 +190,12 @@ export function singleIssuePerCategoryManagingReviewListener(
                 const labels = isBug ? ["bug"] : (isEnhancement ? ["enhancement"] : []);
 
                 // there are some comments
+                const bodyComments = truncateBodyIfTooLarge(bodyFormatter(relevantComments, ri.id));
+                const body = `${bodyComments}\n\n${tag}`;
                 if (!existingIssue) {
                     const issue: Issue = {
                         title,
-                        body: `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`,
+                        body,
                         assignees: assignIssue ? _.uniq(ri.push.commits.map(c => c.author.login)) : undefined,
                         labels,
                     };
@@ -201,7 +204,6 @@ export function singleIssuePerCategoryManagingReviewListener(
                     await raiseIssueLinkEvent(newIssue, ri);
                 } else {
                     // Update the issue if necessary, reopening it if need be
-                    const body = `${bodyFormatter(relevantComments, ri.id)}\n\n${tag}`;
                     await raiseIssueLinkEvent(existingIssue, ri);
                     logger.info("Updating issue %d with the latest ", existingIssue.number);
                     await updateIssue(ri.credentials, ri.id,
