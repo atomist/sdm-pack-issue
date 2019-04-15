@@ -38,7 +38,7 @@ export interface KnownIssue extends Issue {
 export async function updateIssue(credentials: ProjectOperationCredentials, rr: RemoteRepoRef, issue: KnownIssue): Promise<KnownIssue> {
     const safeIssue: Issue = {
         state: issue.state,
-        body: truncateBodyIfTooLarge(issue.body),
+        body: issue.body,
     } as any;
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
@@ -58,7 +58,6 @@ export async function updateIssue(credentials: ProjectOperationCredentials, rr: 
  * Create a GitHub issue and return the API response.
  */
 export async function createIssue(credentials: ProjectOperationCredentials, rr: RemoteRepoRef, issue: Issue): Promise<KnownIssue> {
-    issue.body = truncateBodyIfTooLarge(issue.body);
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
     const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues`;
