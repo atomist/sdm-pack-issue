@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist/sdm-pack-seed/compare/1.2.2...HEAD)
 
+### Fixed
+
+-   Issue creation failing with 422. [#31](https://github.com/atomist/sdm-pack-issue/issues/31)
+
 ## [1.2.2](https://github.com/atomist/sdm-pack-seed/compare/1.2.1...1.2.2) - 2019-04-16
 
 ### Fixed
