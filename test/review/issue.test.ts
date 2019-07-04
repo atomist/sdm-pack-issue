@@ -57,12 +57,15 @@ describe("issue", () => {
             }
             const rr = GitHubRepoRef.from({ owner: "atomisthqa", repo: "handlers" });
             const title = "Issue from sdm-pack-issue test " + randomInt();
-            const c: Issue = { title, body: "First body\n" };
+            const c: Issue = { title, body: "First body\n", assignees: ["atomist-bot"] };
             const i = await createIssue(creds, rr, c);
             assert(i);
             assert(i.title === title);
             assert(i.body === c.body);
             assert(i.state === "open");
+            assert(i.assignees);
+            assert(i.assignees.length === 1);
+            assert((i.assignees[0] as any).login === "atomist-bot");
             const body = "Second body\n" + randomInt();
             const u = await updateIssue(creds, rr, { ...i, body });
             assert(u);
@@ -81,9 +84,8 @@ describe("issue", () => {
             assert(fs[0].title === title);
             assert(fs[0].body === body);
             assert(fs[0].state === "open");
-            const url = encodeURI(`${rr.scheme}${rr.apiBase}/repos/${rr.owner}/${rr.repo}/issues/${i.number}`);
-            const closeIssue = { number: u.number, owner: rr.owner, repo: rr.repo, state: "closed" };
-            await axios.patch(url, closeIssue, github.authHeaders(creds.token));
+            const closeIssue = { assignees: [], state: "closed" } as any;
+            await axios.patch(i.url, closeIssue, github.authHeaders(creds.token));
         }).timeout(15000);
 
     });

@@ -25,6 +25,7 @@ import {
 import { github } from "@atomist/sdm-core";
 // tslint:disable-next-line:import-blacklist
 import axios from "axios";
+import * as stringify from "json-stringify-safe";
 
 export interface KnownIssue extends Issue {
     state: "open" | "closed";
@@ -55,15 +56,31 @@ export async function updateIssue(credentials: ProjectOperationCredentials, rr: 
 }
 
 /**
- * Create a GitHub issue and return the API response.
+ * Create a GitHub issue and return the API response.  If assignees
+ * are provided, they are not provided when creating the issue but
+ * used to update the issue after creation.  This is so an invalid
+ * assignee does not prevent the issue from being created.
  */
 export async function createIssue(credentials: ProjectOperationCredentials, rr: RemoteRepoRef, issue: Issue): Promise<KnownIssue> {
+    const assignees = issue.assignees || (issue.assignee ? [issue.assignee] : undefined);
+    const safeIssue = addCodeInspectionLabel(issue);
+    delete safeIssue.assignee;
+    delete safeIssue.assignees;
     const token = (credentials as TokenCredentials).token;
     const grr = rr as GitHubRepoRef;
     const url = `${grr.scheme}${grr.apiBase}/repos/${rr.owner}/${rr.repo}/issues`;
     logger.info(`Request to '${url}' to create issue`);
     try {
-        const resp = await axios.post(url, addCodeInspectionLabel(issue), github.authHeaders(token));
+        const resp = await axios.post(url, safeIssue, github.authHeaders(token));
+        if (assignees) {
+            try {
+                const assignResp = await axios.patch(resp.data.url, { assignees }, github.authHeaders(token));
+                return assignResp.data;
+            } catch (e) {
+                logger.warn(`Failed to assign issue: ${e.message}`);
+                logger.warn(`Ignoring assignees: ${stringify(assignees)}`);
+            }
+        }
         return resp.data;
     } catch (e) {
         e.message = `Failed to create issue: ${e.message}`;
