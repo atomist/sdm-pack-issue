@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist/sdm-pack-seed/compare/1.2.2...HEAD)
 
+### Changed
+
+-   Update Atomist, TypeScript, and axios deps. [f777e92](https://github.com/atomist/sdm-pack-issue/commit/f777e927d6fb99e8482e29e98cc16f945341799e)
+
 ### Fixed
 
 -   Issue creation failing with 422. [#31](https://github.com/atomist/sdm-pack-issue/issues/31)
